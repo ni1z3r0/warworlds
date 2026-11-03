@@ -454,6 +454,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				try_grab()
 			KEY_V:
 				third_person = not third_person
+			KEY_ENTER, KEY_KP_ENTER:
+				if ended and result == "won" and Progress.active:
+					Progress.complete()
 			KEY_R:
 				get_tree().reload_current_scene()
 			KEY_F1, KEY_H:

@@ -4,8 +4,8 @@ extends Control
 ## silhouetted against the fire. All drawn procedurally.
 
 const MODES := [
-	["THE STORY", "The campaign in Alvim Corrêa's 1906 illustrations. Read, then play.", "res://scenes/campaign.tscn"],
-	["CHAPTER I  -  HORSELL COMMON", "Strategy: command a gun crew and three survivors from above.", "res://scenes/main.tscn"],
+	["THE STORY", "Play the novel from the beginning, chapter by chapter. Continues where you left off.", "res://scenes/campaign.tscn"],
+	["THE FIGHTING BEGINS", "Strategy: escort the narrator, his wife and the landlord to Leatherhead.", "res://scenes/main.tscn"],
 	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
 	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
 ]

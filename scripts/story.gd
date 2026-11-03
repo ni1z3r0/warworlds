@@ -1,58 +1,132 @@
 class_name Story
 extends RefCounted
-## The campaign, told through Henrique Alvim Corrêa's illustrations for the
-## 1906 Belgian edition of The War of the Worlds (public domain; scans from
-## Duke University Libraries via The Public Domain Review).
+## The campaign follows the novel chapter by chapter, illustrated with
+## Henrique Alvim Corrêa's plates for the 1906 Belgian edition (public domain;
+## scans from Duke University Libraries via The Public Domain Review).
 ##
-## Each plate has narration. Text in "quotes" is H. G. Wells' own (public
-## domain), checked word for word against the Project Gutenberg text in
-## the-war-of-the-worlds.txt; everything else is our narration.
+## Each chapter is a run of storybook pages ([plate file, narration]; a file of
+## "" shows a title page instead) and, if it is built, something to play:
+##   "story": id   - a walk-and-talk story scene (scripts/story/chapters/<id>.gd)
+##   "scene": path - one of the action modes
+## Text in "quotes" is H. G. Wells' own, checked word for word against
+## the-war-of-the-worlds.txt by tools/check_quotes.py; the rest is ours.
 
 const BOOK_ONE := "BOOK ONE  -  THE COMING OF THE MARTIANS"
 const BOOK_TWO := "BOOK TWO  -  THE EARTH UNDER THE MARTIANS"
 
-## scene: the playable mode for the chapter, or "" if not built yet.
 const CHAPTERS := [
+	# ------------------------------------------------------------ BOOK ONE
 	{
-		"title": "Prologue: The Eve of the War",
-		"cast": ["narrator", "ogilvy"],
+		"title": "I. The Eve of the War",
 		"book": BOOK_ONE,
-		"scene": "",
+		"cast": ["narrator", "ogilvy"],
+		"story": "b1_01",
+		"mode": "Story: the observatory at Ottershaw",
 		"plates": [
 			["plate_0011.jpg", "\"No one would have believed in the last years of the nineteenth century that this world was being watched keenly and closely by intelligences greater than man's and yet as mortal as his own.\""],
-			["plate_0019.jpg", "Across the gulf of space, Mars watched. Astronomers saw strange flashes on its face, and laughed at talk of life there."],
-			["plate_0027.jpg", "\"Then came the night of the first falling star.\" Over the rooftops of Surrey, a line of green flame fell towards Horsell Common."],
+			["plate_0019.jpg", "Astronomers have seen great outbreaks of gas on Mars. Ogilvy, the astronomer, invites you up to his observatory at Ottershaw to watch."],
 		],
 	},
 	{
-		"title": "I. Horsell Common",
-		"cast": ["narrator", "wife", "ogilvy", "stent", "henderson", "landlord", "artilleryman"],
+		"title": "II. The Falling Star",
 		"book": BOOK_ONE,
-		"scene": "res://scenes/main.tscn",
-		"mode": "Strategy",
+		"cast": ["ogilvy", "henderson"],
+		"story": "b1_02",
+		"mode": "Story: play as Ogilvy",
 		"plates": [
-			["plate_0035.jpg", "In the sand-pit lay a great cylinder, hot and smoking. Crowds gathered. Its top began, very slowly, to unscrew."],
-			["plate_0043.jpg", "\"Those who have never seen a living Martian can scarcely imagine the strange horror of its appearance.\""],
-			["plate_0051.jpg", "Then the heat-ray. Men stepped into an invisible flame and were gone. The crowd broke and ran."],
-			["plate_0059.jpg", "By nightfall the common was silent, and \"the charred bodies lay about on it all night under the stars.\" Then a machine rose from the pit. Get the survivors out."],
+			["plate_0027.jpg", "\"Then came the night of the first falling star.\" At dawn, Ogilvy goes out alone onto Horsell Common to find it."],
 		],
 	},
 	{
-		"title": "II. The Storm",
-		"cast": ["narrator", "artilleryman"],
+		"title": "III. On Horsell Common",
 		"book": BOOK_ONE,
-		"scene": "",
+		"cast": ["narrator", "ogilvy", "stent", "henderson"],
+		"story": "b1_03",
+		"mode": "Story: the crowd at the pit",
+		"plates": [
+			["plate_0035.jpg", "In the sand-pit lies a great cylinder, hot and smoking. By midday half of Woking has come to stare at it."],
+		],
+	},
+	{
+		"title": "IV. The Cylinder Opens",
+		"book": BOOK_ONE,
+		"cast": ["narrator", "stent", "martian"],
+		"story": "b1_04",
+		"mode": "Story: the evening at the pit",
+		"plates": [
+			["", "At sunset the crowd is larger still. The top of the cylinder has almost unscrewed."],
+		],
+	},
+	{
+		"title": "V. The Heat-Ray",
+		"book": BOOK_ONE,
+		"cast": ["narrator", "ogilvy", "stent", "henderson"],
+		"story": "b1_05",
+		"mode": "Story: the Deputation, and the flight",
+		"plates": [
+			["plate_0043.jpg", "\"Those who have never seen a living Martian can scarcely imagine the strange horror of its appearance.\""],
+		],
+	},
+	{
+		"title": "VI. The Heat-Ray in the Chobham Road",
+		"book": BOOK_ONE,
+		"cast": [],
+		"plates": [
+			["plate_0051.jpg", "On the Chobham road the crowd breaks and runs. Men step into an invisible flame and are gone."],
+			["plate_0059.jpg", "By nightfall the common was silent, and \"the charred bodies lay about on it all night under the stars.\""],
+		],
+	},
+	{
+		"title": "VII. How I Reached Home",
+		"book": BOOK_ONE,
+		"cast": ["narrator", "wife"],
+		"story": "b1_07",
+		"mode": "Story: the walk home to Maybury",
+		"plates": [
+			["", "You run until you can run no more, and walk home through the ordinary evening of Woking, where no one believes you."],
+		],
+	},
+	{
+		"title": "VIII. Friday Night",
+		"book": BOOK_ONE,
+		"cast": [],
+		"plates": [
+			["", "Friday night. Troops are moving onto the common. In the pit, the Martians are hammering. A second falling star comes down near Pyrford."],
+		],
+	},
+	{
+		"title": "IX. The Fighting Begins",
+		"book": BOOK_ONE,
+		"cast": ["narrator", "wife", "landlord", "artilleryman"],
+		"scene": "res://scenes/main.tscn",
+		"mode": "Strategy: the dog cart road to Leatherhead",
+		"plates": [
+			["", "Saturday. The guns open fire and a machine rises from the pit. You borrow the landlord's dog cart to drive your wife to safety at Leatherhead."],
+		],
+	},
+	{
+		"title": "X. In the Storm",
+		"book": BOOK_ONE,
+		"cast": ["narrator"],
 		"plates": [
 			["plate_0067.jpg", "\"A monstrous tripod, higher than many houses, striding over the young pine trees, and smashing them aside in its career.\""],
-			["plate_0075.jpg", "Through the thunderstorm the machines went hunting. In the woods, the dead lay where they had fallen. Coming soon: escape through the storm."],
+			["plate_0075.jpg", "Driving back alone through the thunderstorm, you meet the machines. Coming soon: escape through the storm."],
 		],
 	},
 	{
-		"title": "III. The Guns at Shepperton",
-		"cast": ["artilleryman", "narrator"],
+		"title": "XI. At the Window",
 		"book": BOOK_ONE,
+		"cast": ["narrator", "artilleryman"],
+		"plates": [
+			["", "From your study window you watch Woking burn. At dawn a soldier climbs over your garden fence: the artilleryman, the last of his gun. Coming soon."],
+		],
+	},
+	{
+		"title": "XII. The Destruction of Weybridge and Shepperton",
+		"book": BOOK_ONE,
+		"cast": ["artilleryman", "narrator"],
 		"scene": "res://scenes/soldier.tscn",
-		"mode": "First person: the gunner",
+		"mode": "First person: the artilleryman's gun",
 		"plates": [
 			["plate_0099.jpg", "At the meeting of the Wey and the Thames, the machines came striding, their hoods turning, their cages swinging."],
 			["plate_0111.jpg", "The hidden guns opened fire. \"The shell burst clean in the face of the Thing.\" A machine could be brought down."],
@@ -62,8 +136,8 @@ const CHAPTERS := [
 	},
 	{
 		"title": "Interlude: The Martian",
-		"cast": ["martian"],
 		"book": BOOK_ONE,
+		"cast": ["martian"],
 		"scene": "res://scenes/pilot.tscn",
 		"mode": "First person: the fighting-machine",
 		"plates": [
@@ -71,28 +145,35 @@ const CHAPTERS := [
 		],
 	},
 	{
-		"title": "IV. The Exodus",
-		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
+		"title": "XIII. How I Fell In with the Curate",
 		"book": BOOK_ONE,
-		"scene": "",
+		"cast": ["narrator", "curate"],
 		"plates": [
-			["plate_0255.jpg", "London woke to the news, and fled. \"It was the beginning of the rout of civilisation, of the massacre of mankind.\" Coming soon: lead a column of refugees out of the city."],
+			["", "Swept down the Thames, you come ashore near Walton and meet a curate sitting in the ruins. \"What does it mean?\" he asks. Coming soon."],
 		],
 	},
 	{
-		"title": "V. The Thunder Child",
-		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
+		"title": "XIV-XVI. In London; The Exodus",
 		"book": BOOK_ONE,
-		"scene": "",
+		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
+		"plates": [
+			["plate_0255.jpg", "Your brother, a medical student in London, wakes to the news. \"It was the beginning of the rout of civilisation, of the massacre of mankind.\" Coming soon: lead a column of refugees out of the city."],
+		],
+	},
+	{
+		"title": "XVII. The Thunder Child",
+		"book": BOOK_ONE,
+		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
 		"plates": [
 			["plate_0159.jpg", "Off the Essex coast, the steamers crowded with refugees. Then the ironclad came: \"It was the torpedo ram, Thunder Child, steaming headlong, coming to the rescue of the threatened shipping.\""],
 			["plate_0167.jpg", "She took two machines down with her. Then, out of the greyness, \"something flat and broad, and very large, that swept round in a vast curve.\" Coming soon."],
 		],
 	},
+	# ------------------------------------------------------------ BOOK TWO
 	{
-		"title": "VI. The Ruined House",
-		"cast": ["narrator", "curate", "martian"],
+		"title": "I-VI. The Ruined House",
 		"book": BOOK_TWO,
+		"cast": ["narrator", "curate", "martian"],
 		"scene": "res://scenes/ruined_house.tscn",
 		"mode": "Stealth: fifteen days beside the pit",
 		"plates": [
@@ -101,31 +182,37 @@ const CHAPTERS := [
 			["plate_0203.jpg", "The Martians' handling-machines worked day and night, building, digging, feeding."],
 			["plate_0211.jpg", "The curate broke. He would not be quiet. The narrator had to choose."],
 			["plate_0223.jpg", "A tentacle came through the hole in the wall, searching the scullery in the dark."],
+			["plate_0231.jpg", "A red weed from Mars choked the house, and \"grew with astonishing vigour and luxuriance\"."],
 			["plate_0247.jpg", "Fifteen days later, the pit was empty. Survive until then. Keep the Curate quiet, and keep out of the light."],
 		],
 	},
 	{
-		"title": "VII. The Red Weed",
-		"cast": ["narrator"],
+		"title": "VII. The Man on Putney Hill",
 		"book": BOOK_TWO,
-		"scene": "",
+		"cast": ["narrator", "artilleryman"],
 		"plates": [
-			["plate_0231.jpg", "A red weed from Mars choked the houses and the gardens, and \"grew with astonishing vigour and luxuriance\"."],
-			["plate_0239.jpg", "It clogged the rivers until the streets flooded. Coming soon: survivors cross a drowned, red country."],
+			["plate_0239.jpg", "The red weed clogged the rivers until the streets flooded. On Putney Hill you meet the artilleryman again. Coming soon."],
 		],
 	},
 	{
 		"title": "VIII. Dead London",
-		"cast": ["narrator", "artilleryman", "wife"],
 		"book": BOOK_TWO,
-		"scene": "",
+		"cast": ["narrator"],
 		"plates": [
 			["plate_0283.jpg", "London was empty. The windows stared like eyes."],
 			["plate_0263.jpg", "A howl went over the city, and then stopped."],
 			["plate_0291.jpg", "On Primrose Hill, the great pit, full of their machines."],
 			["plate_0297.jpg", "The fighting-machines stood silent. Crows circled them."],
-			["plate_0275.jpg", "The Martians were dead, \"slain, after all man's devices had failed, by the humblest things that God, in his wisdom, has put upon this earth.\""],
-			["plate_0303.jpg", "And the people came back to look. Coming soon: the finale, when every shield fails."],
+			["plate_0275.jpg", "The Martians were dead, \"slain, after all man's devices had failed, by the humblest things that God, in his wisdom, has put upon this earth.\" Coming soon."],
+		],
+	},
+	{
+		"title": "IX-X. Wreckage; The Epilogue",
+		"book": BOOK_TWO,
+		"cast": ["narrator", "wife"],
+		"plates": [
+			["plate_0303.jpg", "And the people came back to look."],
+			["", "You walk home to Woking, to an empty house. And then: \"my wife white and tearless.\" \"I came,\" she said. Coming soon: the finale."],
 		],
 	},
 ]

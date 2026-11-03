@@ -30,6 +30,7 @@ func _ready() -> void:
 	var sf := SystemFont.new()
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "serif"])
 	serif = sf
+	chapter = clampi(Progress.current, 0, Story.CHAPTERS.size() - 1)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--chapter="):
 			chapter = int(a.substr(10))
@@ -100,35 +101,40 @@ func _draw() -> void:
 	draw_string(serif, Vector2(40, 58), "THE WAR OF THE WORLDS", HORIZONTAL_ALIGNMENT_LEFT, -1, 30, AMBER)
 	draw_string(font, Vector2(40, 84), "Illustrated by Henrique Alvim Corrêa, 1906", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, DIM)
 	_list_rects.clear()
-	var y := 128.0
+	var y := 112.0
 	var book := ""
 	for i in Story.CHAPTERS.size():
 		var c: Dictionary = Story.CHAPTERS[i]
 		if c.book != book:
 			book = c.book
-			y += 10.0
-			draw_string(font, Vector2(40, y), book, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(AMBER, 0.6))
+			y += 6.0
+			draw_string(font, Vector2(40, y + 8), book, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(AMBER, 0.6))
 			y += 14.0
-		var r := Rect2(30, y, 500, 50)
+		var r := Rect2(30, y, 510, 36)
 		_list_rects.append(r)
 		var on := i == chapter
 		if on:
 			draw_rect(r, Color(0.25, 0.1, 0.05, 0.8))
 			draw_rect(r, Color(AMBER, 0.8), false, 1.5)
-		var playable: bool = c.scene != ""
-		draw_string(serif, r.position + Vector2(14, 24), c.title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CREAM if on else Color(CREAM, 0.8))
-		var tag: String = c.get("mode", "") if playable else "coming soon"
-		draw_string(font, r.position + Vector2(14, 42), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.6, 1.0, 0.6, 0.85) if playable else Color(DIM, 0.6))
-		y += 56.0
-	y += 10.0
-	var cr := Rect2(30, y, 500, 50)
+		var playable := _playable(i)
+		var done := Progress.is_done(i)
+		draw_string(serif, r.position + Vector2(14, 17), c.title, HORIZONTAL_ALIGNMENT_LEFT, 440, 15, CREAM if on else Color(CREAM, 0.8))
+		var tag: String = c.get("mode", "Read") if playable else ("Read" if c.cast.is_empty() else "Read  (coming soon to play)")
+		draw_string(font, r.position + Vector2(14, 31), tag, HORIZONTAL_ALIGNMENT_LEFT, 440, 11, Color(0.6, 1.0, 0.6, 0.85) if playable else Color(DIM, 0.6))
+		if done:
+			draw_string(font, r.position + Vector2(470, 22), "done", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.6, 1.0, 0.6, 0.7))
+		elif i == Progress.current:
+			draw_string(font, r.position + Vector2(425, 22), "you are here", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(AMBER, 0.9))
+		y += 38.0
+	y += 6.0
+	var cr := Rect2(30, y, 510, 36)
 	_list_rects.append(cr)
 	var con := chapter == _cast_index()
 	if con:
 		draw_rect(cr, Color(0.25, 0.1, 0.05, 0.8))
 		draw_rect(cr, Color(AMBER, 0.8), false, 1.5)
-	draw_string(serif, cr.position + Vector2(14, 24), "THE CAST", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CREAM if con else Color(CREAM, 0.8))
-	draw_string(font, cr.position + Vector2(14, 42), "Wells' characters, in his own words", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(AMBER, 0.7))
+	draw_string(serif, cr.position + Vector2(14, 17), "THE CAST", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, CREAM if con else Color(CREAM, 0.8))
+	draw_string(font, cr.position + Vector2(14, 31), "Wells' characters, in his own words", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(AMBER, 0.7))
 	if con:
 		_draw_cast_page(w, h)
 		return
@@ -136,14 +142,24 @@ func _draw() -> void:
 	# the plate, mounted like a page
 	var plates := _plates()
 	var entry: Array = plates[plate]
-	var tex := _texture(entry[0])
 	var box := Rect2(580, 40, 640, h - 80)
-	var ts := tex.get_size()
-	var k := minf(box.size.x / ts.x, box.size.y / ts.y)
-	var ps := ts * k
-	var pr := Rect2(box.position + (box.size - ps) * 0.5, ps)
-	draw_rect(pr.grow(10), Color(0, 0, 0, 0.5))
-	draw_texture_rect(tex, pr, false, Color(1, 1, 1, _fade))
+	if entry[0] == "":
+		# a title page, for chapters Corrêa did not illustrate
+		var pr0 := Rect2(box.position + Vector2(40, 60), box.size - Vector2(80, 120))
+		draw_rect(pr0.grow(10), Color(0, 0, 0, 0.5))
+		draw_rect(pr0, Color(0.9, 0.85, 0.72, _fade))
+		draw_rect(pr0.grow(-14), Color(0.25, 0.18, 0.12, 0.6 * _fade), false, 1.5)
+		var t: String = Story.CHAPTERS[chapter].title
+		draw_string(serif, Vector2(pr0.position.x, pr0.position.y + pr0.size.y * 0.42), t, HORIZONTAL_ALIGNMENT_CENTER, pr0.size.x, 30, Color(0.2, 0.13, 0.08, _fade))
+		draw_line(pr0.position + Vector2(pr0.size.x * 0.3, pr0.size.y * 0.5), pr0.position + Vector2(pr0.size.x * 0.7, pr0.size.y * 0.5), Color(0.2, 0.13, 0.08, 0.6 * _fade), 1.5)
+	else:
+		var tex := _texture(entry[0])
+		var ts := tex.get_size()
+		var k := minf(box.size.x / ts.x, box.size.y / ts.y)
+		var ps := ts * k
+		var pr := Rect2(box.position + (box.size - ps) * 0.5, ps)
+		draw_rect(pr.grow(10), Color(0, 0, 0, 0.5))
+		draw_texture_rect(tex, pr, false, Color(1, 1, 1, _fade))
 
 	# narration
 	var tx := 1250.0
@@ -166,7 +182,7 @@ func _draw() -> void:
 	_button(_prev_rect, "<  previous", plate > 0)
 	_button(_next_rect, "next  >", plate < plates.size() - 1 or chapter < _cast_index())
 	_play_rect = Rect2(tx, h - 140, 320, 56)
-	if c.scene != "":
+	if _playable(chapter):
 		var pulse := 0.75 + 0.25 * sin(_t * 3.0)
 		draw_rect(_play_rect, Color(0.15, 0.3, 0.12, 0.9))
 		draw_rect(_play_rect, Color(0.6, 1.0, 0.6, pulse), false, 2.0)
@@ -224,9 +240,16 @@ func _prev() -> void:
 		_go(chapter - 1, 999)
 
 
+func _playable(i: int) -> bool:
+	var c: Dictionary = Story.CHAPTERS[i]
+	return c.has("story") or c.get("scene", "") != ""
+
+
 func _play() -> void:
-	if chapter == _cast_index():
+	if chapter == _cast_index() or not _playable(chapter):
 		return
+	Progress.play(chapter)
+	return
 	var s: String = Story.CHAPTERS[chapter].scene
 	if s != "":
 		get_tree().change_scene_to_file(s)

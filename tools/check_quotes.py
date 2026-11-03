@@ -28,6 +28,16 @@ for name in ('MUTTER', 'SHOUTS'):
     quotes += [('house_mode.gd', q) for q in re.findall(r'"(.*?)"', block)]
 quotes += [('house_mode.gd', q) for q in re.findall(r'\\"(.+?)\\"', house)]
 
+# story chapters: every spoken ["say", who, ...] segment, and \"quotes\" in narration
+for ch in sorted((root / 'scripts/story/chapters').glob('*.gd')):
+    src = ch.read_text(encoding='utf-8')
+    for line in src.splitlines():
+        t = line.strip()
+        if t.startswith('["say"'):
+            strs = re.findall(r'"((?:[^"\\]|\\.)*)"', t)[2:]
+            quotes += [(ch.name, q) for q in strs]
+    quotes += [(ch.name, q) for q in re.findall(r'\\"(.+?)\\"', src)]
+
 bad = 0
 for src, q in quotes:
     qn = norm(q).rstrip('.,!?')

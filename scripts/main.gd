@@ -325,6 +325,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_key(k: Key) -> void:
 	match k:
+		KEY_ENTER, KEY_KP_ENTER:
+			if ended and result == "won" and Progress.active:
+				get_tree().paused = false
+				Progress.complete()
 		KEY_R:
 			get_tree().paused = false
 			get_tree().reload_current_scene()

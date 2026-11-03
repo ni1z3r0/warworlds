@@ -12,24 +12,41 @@ A game based on H. G. Wells' *The War of the Worlds* (1898). Built in **Godot 4.
 
 In every mode, **R** restarts and **M** returns to the menu.
 
-## The story: Alvim Corrêa's 1906 illustrations
+## The story: play the novel, chapter by chapter
 
 ![The story](docs/screenshots/story.png)
 
-Choose **THE STORY** on the main menu. The campaign is told through Henrique Alvim Corrêa's 31 plates for the 1906 Belgian edition of the novel. They're public domain worldwide; see `art/correa/CREDITS.md`. Each chapter is a run of plates with narration. Text in quotation marks is Wells' own, checked word for word against the Project Gutenberg text in `the-war-of-the-worlds.txt`. Read a chapter, then press **Play** if it's built:
+Choose **THE STORY** on the main menu. The game follows the novel's own chapters in order, from the observatory at Ottershaw to Dead London, illustrated with Henrique Alvim Corrêa's 31 plates from the 1906 edition (public domain; see `art/correa/CREDITS.md`). Read each chapter's pages, then press **Play**. When you finish a chapter, the story moves on to the next one, and your place is saved.
 
-| Chapter | Playable as |
+| Book One | How you play it |
 |---|---|
-| Prologue: The Eve of the War | story only |
-| I. Horsell Common | Strategy |
-| II. The Storm | coming soon |
-| III. The Guns at Shepperton | First person: the gunner |
+| I. The Eve of the War | Story: the observatory. Look through Ogilvy's telescope and catch the flash on Mars. |
+| II. The Falling Star | Story: play as Ogilvy. Find the cylinder at dawn and fetch Henderson. |
+| III. On Horsell Common | Story: the crowd at the pit. Stop the boys, and run Ogilvy's errand. |
+| IV. The Cylinder Opens | Story: the lid falls and the Martian emerges. Run for the trees. |
+| V. The Heat-Ray | Story: the Deputation burns. Flee across the common, ducking behind hummocks as the ray sweeps. |
+| VI. The Heat-Ray in the Chobham Road | Read |
+| VII. How I Reached Home | Story: nobody in Maybury believes you, then dinner with your wife |
+| VIII. Friday Night | Read |
+| IX. The Fighting Begins | Strategy: the dog cart road to Leatherhead |
+| X. In the Storm, XI. At the Window | Read (playable soon) |
+| XII. The Destruction of Weybridge and Shepperton | First person: the artilleryman's gun |
 | Interlude: The Martian | First person: the fighting-machine |
-| IV. The Exodus, V. The *Thunder Child* | coming soon |
-| VI. The Ruined House | Stealth |
-| VII. The Red Weed, VIII. Dead London | coming soon |
+| XIII to XVII (the curate, London, the Exodus, the *Thunder Child*) | Read (playable soon) |
 
-Controls: arrow keys or click to turn plates, Enter to play, Esc for the menu.
+| Book Two | How you play it |
+|---|---|
+| I-VI. The Ruined House | Stealth: fifteen days beside the pit |
+| VII. The Man on Putney Hill, VIII. Dead London, IX-X. Wreckage; The Epilogue | Read (playable soon) |
+
+![The observatory](docs/screenshots/ch1_observatory.png)
+![The heat-ray](docs/screenshots/ch5_heatray.png)
+
+### The story engine
+
+The quieter chapters run on a walk-and-talk engine (`scripts/story/`). Each chapter is a data script in `scripts/story/chapters/`: its map, its characters, and a list of steps, each with a goal, a condition (talk to someone, use something, reach a place) and the actions that follow (dialogue, narration, Corrêa plate cutscenes, the telescope, moving characters, fire, the heat-ray). Writing a new chapter means writing one of these files. All dialogue is Wells' own, spoken by the characters who say it in the novel, and is checked by `tools/check_quotes.py`.
+
+Controls: WASD to move, E to talk, use or continue, M for the storybook.
 
 ## VI. The Ruined House (stealth)
 
@@ -144,7 +161,9 @@ The mood is a 1970s painted prog-rock album cover: blood-red skies, burning oran
 
 ```
 scenes/menu.tscn            main menu (start scene)
-scenes/campaign.tscn        the story: Corrêa plates and chapter select (scripts/campaign.gd, scripts/story.gd)
+scenes/campaign.tscn        the storybook: chapter select (scripts/campaign.gd); chapters in scripts/story.gd
+scenes/story_scene.tscn     the walk-and-talk story engine (scripts/story/)
+scripts/progress.gd         autoload: campaign progress and save (user://campaign.json)
 art/correa/                 the 1906 plates (public domain) and CREDITS.md
 art/portraits/              character portraits and CREDITS.md
 scripts/cast.gd             the characters: Wells' descriptions and lines
@@ -179,6 +198,7 @@ godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=a     # RTS
 godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=e     # RTS: capture into the cage, then rescue
 godot --headless --fixed-fps 60 res://scenes/pilot.tscn -- --autotest      # pilot mode
 godot --headless --fixed-fps 60 res://scenes/soldier.tscn -- --autotest    # soldier mode: a test gunner duels the machine
+godot --headless --fixed-fps 30 res://scenes/story_scene.tscn -- --story=b1_01 --autotest   # any story chapter (b1_01 ... b1_07)
 godot --headless --fixed-fps 60 res://scenes/ruined_house.tscn -- --autotest=wells   # the house, as in the novel (also: --autotest, --autotest=caught)
 ```
 

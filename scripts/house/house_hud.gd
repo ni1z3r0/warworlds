@@ -116,7 +116,7 @@ func _draw() -> void:
 		_overlay(w, h, "PAUSED", "Esc resume     R restart     M main menu", AMBER)
 	if m.ended:
 		var won: bool = m.result == "won"
-		_overlay(w, h, "YOU ESCAPED THE HOUSE" if won else "TAKEN", m.ending + "\n\nR play again     M main menu", GREEN if won else Color(1, 0.45, 0.3))
+		_overlay(w, h, "YOU ESCAPED THE HOUSE" if won else "TAKEN", m.ending + ("\n\nEnter continue the story     R play again     M main menu" if (won and Progress.active) else "\n\nR play again     M main menu"), GREEN if won else Color(1, 0.45, 0.3))
 
 
 func _banner(text: String, c: Color, y: float = 120.0) -> void:
