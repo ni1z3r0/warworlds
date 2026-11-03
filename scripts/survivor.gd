@@ -36,6 +36,8 @@ func status_text() -> String:
 		return "ESCAPED"
 	if not alive:
 		return "LOST - " + cause
+	if captured:
+		return "CAGED! Bring the machine down"
 	if in_smoke:
 		return "CHOKING IN THE SMOKE!"
 	if in_cellar:

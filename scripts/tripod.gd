@@ -4,17 +4,23 @@ extends Node2D
 ## a towering three-legged engine with a cowled body, hanging metal tentacles,
 ## a heat-ray projector and black-smoke canisters.
 ##
+## Like Wells' machines it carries a metal carrier-cage on its back and
+## seizes people with its tentacles when they are close enough to grab.
+##
 ## Protected by a shield (a mechanic of our own). Shells only hurt it while the
 ## shield is down: overloaded by hits, or failing as Earth's bacteria sicken
 ## the Martian inside.
 
-enum S { PATROL, INVESTIGATE, SEARCH, HUNT, CHARGE, COOLDOWN, DYING, DEAD }
+enum S { PATROL, INVESTIGATE, SEARCH, HUNT, CHARGE, GRAB, COOLDOWN, DYING, DEAD }
 
 const HEIGHT := 112.0
 const SCALE := 1.6
 const REACH := 84.0
 const CHARGE_TIME := 1.3
 const SHIELD_MAX := 100.0
+const GRAB_RANGE := 125.0
+const GRAB_TIME := 1.1
+const CAGE_SIZE := 4
 const BODY := [Vector2(36, 0), Vector2(24, -14), Vector2(4, -22), Vector2(-20, -19),
 	Vector2(-36, -6), Vector2(-36, 6), Vector2(-20, 19), Vector2(4, 22), Vector2(24, 14)]
 
@@ -54,6 +60,8 @@ var smoke_cd := 8.0
 var awareness := {}
 var dying_t := 0.0
 var death_cause := ""
+var captives: Array[Unit] = []
+var grab_t := 0.0
 var _t := 0.0
 
 var feet: Array[Vector2] = []
@@ -101,6 +109,8 @@ func status_text() -> String:
 			return "HUNTING"
 		S.CHARGE:
 			return "CHARGING HEAT-RAY!"
+		S.GRAB:
+			return "SEIZING SOMEONE!"
 		S.COOLDOWN:
 			return "Heat-ray recharging"
 		S.DYING:
@@ -180,12 +190,33 @@ func _process(delta: float) -> void:
 				state = S.HUNT
 				charge = 0.0
 				lost_t = 0.0
+			elif _can_grab(target):
+				state = S.GRAB
+				grab_t = 0.0
+				charge = 0.0
+				main.log_msg("The machine reaches for %s with its tentacles!" % target.display_name)
 			else:
 				last_known = target.position
 				_turn_toward(target.position - position, delta * 2.0)
 				charge += delta
 				if charge >= CHARGE_TIME:
 					_fire_ray()
+		S.GRAB:
+			if not _valid_target() or position.distance_to(target.position) > GRAB_RANGE + 50.0:
+				if _valid_target():
+					main.log_msg("%s tears free of the tentacles!" % target.display_name)
+				state = S.HUNT
+				lost_t = 0.0
+			else:
+				last_known = target.position
+				_turn_toward(target.position - position, delta * 2.0)
+				grab_t += delta
+				if grab_t >= GRAB_TIME:
+					captives.append(target)
+					main.capture(target)
+					target = null
+					state = S.COOLDOWN
+					cooldown = 1.2
 		S.COOLDOWN:
 			cooldown -= delta
 			if cooldown <= 0.0:
@@ -200,6 +231,10 @@ func _process(delta: float) -> void:
 					search_t = 3.0
 	_update_legs(delta)
 	queue_redraw()
+
+
+func _can_grab(u: Unit) -> bool:
+	return u is Survivor and captives.size() < CAGE_SIZE and position.distance_to(u.position) < GRAB_RANGE
 
 
 func _valid_target() -> bool:
@@ -446,6 +481,24 @@ func _draw() -> void:
 			pts.append(base + Vector2(sin(_t * 2.2 + k * 1.9 + s * 0.7) * (s * 1.2), y))
 		draw_polyline(pts, Color(0.30, 0.22, 0.18), 3.0, true)
 
+	# the carrier-cage slung behind, like a workman's basket
+	if is_active() or state == S.DYING:
+		_draw_cage(hub, sq)
+	# tentacle reaching for a victim
+	if state == S.GRAB and _valid_target():
+		var tp := to_local(target.position)
+		var k := clampf(grab_t / GRAB_TIME, 0.0, 1.0)
+		var start := hub + Vector2(0, 18)
+		var end := start.lerp(tp, minf(1.0, k * 1.6))
+		for side in [-1.0, 1.0]:
+			var pts := PackedVector2Array()
+			for s in 9:
+				var u := s / 8.0
+				var w: float = sin(u * PI) * (10.0 + 6.0 * sin(_t * 9.0)) * side
+				pts.append(start.lerp(end, u) + (end - start).normalized().orthogonal() * w)
+			draw_polyline(pts, Color(0.05, 0.03, 0.03), 5.0, true)
+			draw_polyline(pts, Color(0.55, 0.32, 0.2), 2.0, true)
+
 	# cowled body
 	var ang := facing.angle()
 	var body := PackedVector2Array()
@@ -515,6 +568,30 @@ func _draw() -> void:
 		for k in 6:
 			var p := hub + Vector2(sin(k * 2.1 + _t) * 18.0, -dying_t * 20.0 - k * 9.0)
 			draw_circle(p, 9.0 + k * 2.0, Color(0.05, 0.05, 0.05, 0.4))
+
+
+func _draw_cage(hub: Vector2, sq: Vector2) -> void:
+	var ang := facing.angle()
+	var c := hub + Vector2(-58, 0).rotated(ang) * sq
+	var r := 19.0
+	var metal := Color(0.32, 0.24, 0.2)
+	for side in [-12.0, 12.0]:
+		draw_line(hub + Vector2(-26, side).rotated(ang) * sq, c + Vector2(r * 0.6, side * 0.8).rotated(ang), Color(0.1, 0.07, 0.06), 4.0)
+	draw_set_transform(c, ang, Vector2(1.0, 0.85))
+	draw_circle(Vector2.ZERO, r, Color(0.05, 0.03, 0.03, 0.85))
+	var i := 0
+	for u in captives:
+		var p := Vector2(-6 + (i % 2) * 12, -6 + (i / 2) * 12) + Vector2(sin(_t * 3.0 + i), cos(_t * 2.0 + i)) * 1.5
+		draw_circle(p, 4.5, (u as Survivor).coat if u is Survivor else Color(0.5, 0.4, 0.3))
+		draw_circle(p + Vector2(1.5, 0), 2.2, Color(0.9, 0.75, 0.6))
+		i += 1
+	for x in range(-15, 16, 6):
+		var h := sqrt(maxf(r * r - x * x, 0.0))
+		draw_line(Vector2(x, -h), Vector2(x, h), metal, 1.5)
+		draw_line(Vector2(-h, x), Vector2(h, x), metal, 1.5)
+	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(0.05, 0.03, 0.03), 4.0)
+	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(1.0, 0.5, 0.15, 0.7), 1.5)
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 func _draw_wreck() -> void:

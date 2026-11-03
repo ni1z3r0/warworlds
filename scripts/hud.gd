@@ -46,14 +46,17 @@ func _draw() -> void:
 	_text(Vector2(24, 58), "Get the survivors across the river to the Leatherhead road.", 13, cream)
 	var esc := 0
 	var lost := 0
+	var taken := 0
 	for u in main.roster:
 		if u is Survivor:
 			if u.escaped:
 				esc += 1
 			elif not u.alive:
 				lost += 1
+			elif u.captured:
+				taken += 1
 	var mt: float = main.mission_time
-	_text(Vector2(24, 78), "Escaped %d / 3      Lost %d      %d:%02d" % [esc, lost, int(mt) / 60, int(mt) % 60], 13, Color(cream, 0.8))
+	_text(Vector2(24, 78), "Escaped %d / 3     Lost %d     Caged %d     %d:%02d" % [esc, lost, taken, int(mt) / 60, int(mt) % 60], 13, Color(cream, 0.8))
 
 	# the machine
 	var t: Tripod = main.tripod
@@ -139,7 +142,7 @@ func _draw() -> void:
 			["Right-click (gun ready)", "fire"],
 			["1-4  /  A", "select unit / all"],
 			["Space", "pause"],
-			["R", "restart"],
+			["R  /  M", "restart / main menu"],
 			["F1", "hide this help"],
 		]
 		_text(hr.position + Vector2(12, 22), "ORDERS", 14, amber, serif)
@@ -161,6 +164,8 @@ func _draw() -> void:
 		if not t.is_active() and won:
 			sub = "%d escaped, %d lived to see the machine fall." % [esc, 3 - esc - lost]
 		draw_string(font, er.position + Vector2(0, 104), sub, HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 16, cream)
+		if t.is_active() and taken > 0:
+			draw_string(font, er.position + Vector2(0, 132), "%d carried off in the machine's cage." % taken, HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 15, Color(1, 0.6, 0.4))
 		if not t.is_active():
 			draw_string(font, er.position + Vector2(0, 132), "The machine was %s." % t.death_cause, HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 15, Color(0.6, 1.0, 0.65))
-		draw_string(font, er.position + Vector2(0, 186), "Press R to play again", HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 14, Color(cream, 0.7))
+		draw_string(font, er.position + Vector2(0, 186), "R  play again        M  main menu", HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 14, Color(cream, 0.7))

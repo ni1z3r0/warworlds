@@ -13,7 +13,6 @@ var world: World
 var gun: FieldGun
 var tripod: Tripod
 var hud: Control
-var title: Control
 var units: Array[Unit] = []      # on the map and able to act
 var roster: Array[Unit] = []     # everyone, for the HUD
 var smokes: Array[BlackSmoke] = []
@@ -86,14 +85,6 @@ func _ready() -> void:
 	hud.main = self
 	hud_layer.add_child(hud)
 
-	var title_layer := CanvasLayer.new()
-	title_layer.layer = 20
-	add_child(title_layer)
-	title = load("res://scripts/title.gd").new()
-	title.main = self
-	title_layer.add_child(title)
-
-	get_tree().paused = true
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shots="):
 			_shot_dir = a.substr(8)
@@ -103,8 +94,7 @@ func _ready() -> void:
 				_shot_times.append(float(v))
 	if autotest:
 		_setup_autotest()
-		if _shot_dir == "":
-			start()
+	start()
 
 
 func _setup_unit(u: Unit, n: String, r: String, spd: float, pos: Vector2) -> void:
@@ -121,7 +111,6 @@ func _setup_unit(u: Unit, n: String, r: String, spd: float, pos: Vector2) -> voi
 
 func start() -> void:
 	started = true
-	title.visible = false
 	get_tree().paused = false
 	log_msg("A machine has risen from the pit on Horsell Common.")
 	log_msg("Get everyone across the river to the Leatherhead road.")
@@ -131,9 +120,6 @@ func start() -> void:
 
 func _process(delta: float) -> void:
 	_frames += 1
-	if _shot_dir != "" and not started and _frames == 20:
-		_shoot("title")
-		start()
 	if _shot_dir != "" and started and not _shot_times.is_empty() and mission_time >= _shot_times[0]:
 		_shoot("t%02d" % int(_shot_times.pop_front()))
 	if not started or ended or get_tree().paused:
@@ -180,7 +166,7 @@ func _check_end() -> void:
 		if u is Survivor:
 			if u.escaped:
 				escaped += 1
-			elif u.alive:
+			elif u.alive and not u.captured:
 				pending += 1
 	if pending > 0 and tripod.is_active():
 		return
@@ -211,7 +197,34 @@ func on_unit_died(u: Unit, why: String) -> void:
 	log_msg("%s - %s." % [u.display_name, why])
 
 
+func capture(u: Unit) -> void:
+	u.captured = true
+	u.in_cellar = false
+	u.path.clear()
+	u.selected = false
+	u.visible = false
+	u.process_mode = Node.PROCESS_MODE_DISABLED
+	units.erase(u)
+	selected.erase(u)
+	log_msg("%s is thrown into the machine's cage!" % u.display_name)
+
+
+func free_captives(pos: Vector2) -> void:
+	var i := 0
+	for u in tripod.captives:
+		u.captured = false
+		u.alert = 0.0
+		u.position = pos + Vector2(-50, 0).rotated(tripod.facing.angle()) + Vector2(i * 14 - 14, 18)
+		u.visible = true
+		u.process_mode = Node.PROCESS_MODE_INHERIT
+		units.append(u)
+		log_msg("%s climbs out of the broken cage!" % u.display_name)
+		i += 1
+	tripod.captives.clear()
+
+
 func on_tripod_down(why: String) -> void:
+	free_captives(tripod.position)
 	if why.contains("bacteria"):
 		log_msg("The machine shudders, its shield gone... the Martian inside is dying!")
 	else:
@@ -301,6 +314,9 @@ func _on_key(k: Key) -> void:
 		KEY_R:
 			get_tree().paused = false
 			get_tree().reload_current_scene()
+		KEY_M:
+			get_tree().paused = false
+			get_tree().change_scene_to_file("res://scenes/menu.tscn")
 		KEY_F1, KEY_QUESTION:
 			show_help = not show_help
 		KEY_SPACE, KEY_P:
@@ -416,6 +432,18 @@ func _setup_autotest() -> void:
 		_test_steps = [
 			[0.5, func(): _set_selection([roster[1]]); command(Vector2(470, 300))],
 			[3.0, func(): _set_selection([roster[1]]); hide_selected()],
+			[30.0, func(): tripod.on_shell(tripod.position, gun)],
+			[30.5, func(): tripod.on_shell(tripod.position, gun)],
+			[31.0, func(): tripod.on_shell(tripod.position, gun)],
+			[33.0, func(): tripod.on_shell(tripod.position, gun)],
+			[35.0, func(): tripod.on_shell(tripod.position, gun)],
+			[60.0, func(): _finish_autotest()],
+		]
+		return
+	if variant == "e":
+		# capture: a survivor walks into the machine's path, then the machine is shot down
+		_test_steps = [
+			[0.5, func(): _set_selection([roster[1]]); command(Vector2(560, 280))],
 			[30.0, func(): tripod.on_shell(tripod.position, gun)],
 			[30.5, func(): tripod.on_shell(tripod.position, gun)],
 			[31.0, func(): tripod.on_shell(tripod.position, gun)],

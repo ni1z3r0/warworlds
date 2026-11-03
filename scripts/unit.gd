@@ -10,6 +10,7 @@ var speed := 70.0
 var selected := false
 var alive := true
 var escaped := false
+var captured := false
 var in_cellar := false
 var hp := 1.0
 var alert := 0.0          # how close the machine is to spotting this unit (0..1)

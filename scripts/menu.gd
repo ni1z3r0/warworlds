@@ -1,9 +1,14 @@
 extends Control
-## Title card: a painted scene in the spirit of 1970s prog-rock album art.
+## Main menu over a painted scene in the spirit of 1970s prog-rock album art.
 ## Blood-red sky, burning horizon, black smoke, and our own fighting-machine
 ## silhouetted against the fire. All drawn procedurally.
 
-var main: Node
+const MODES := [
+	["CHAPTER I  -  HORSELL COMMON", "Strategy: command a gun crew and three survivors from above.", "res://scenes/main.tscn"],
+	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
+	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
+]
+var hover := -1
 var serif: Font
 var font: Font
 var _t := 0.0
@@ -11,7 +16,7 @@ var _t := 0.0
 
 func _ready() -> void:
 	size = Vector2(World.W, World.H + 100)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	font = ThemeDB.fallback_font
 	var sf := SystemFont.new()
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "Liberation Serif", "serif"])
@@ -126,6 +131,56 @@ func _draw() -> void:
 		"greater than man's and yet as mortal as his own...\"",
 	]
 	for i in quote.size():
-		draw_string(serif, Vector2(0, 815 + i * 26), quote[i], HORIZONTAL_ALIGNMENT_CENTER, w, 18, Color(cream, 0.75))
-	var blink := 0.55 + 0.45 * sin(_t * 3.0)
-	draw_string(font, Vector2(0, 950), "CHAPTER I  -  HORSELL COMMON        Press ENTER or click to begin", HORIZONTAL_ALIGNMENT_CENTER, w, 16, Color(1, 0.85, 0.5, blink))
+		draw_string(serif, Vector2(60, 845 + i * 26), quote[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(cream, 0.75))
+	for i in MODES.size():
+		var r := _option_rect(i)
+		var on := i == hover
+		draw_rect(r, Color(0.06, 0.02, 0.02, 0.85 if on else 0.7))
+		draw_rect(r, Color(1, 0.6, 0.25, 0.95 if on else 0.45), false, 2.0 if on else 1.0)
+		draw_string(serif, r.position + Vector2(18, 34), "%d   %s" % [i + 1, MODES[i][0]], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 0.85, 0.55) if on else cream)
+		draw_string(font, r.position + Vector2(46, 60), MODES[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(cream, 0.75))
+	draw_string(font, Vector2(0, 985), "Click a mode or press 1, 2 or 3", HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
+
+
+func _option_rect(i: int) -> Rect2:
+	return Rect2(1000, 560 + i * 88, 560, 76)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		hover = -1
+		for i in MODES.size():
+			if _option_rect(i).has_point(event.position):
+				hover = i
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and hover >= 0:
+		_go(hover)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_1:
+				_go(0)
+			KEY_2:
+				_go(1)
+			KEY_3:
+				_go(2)
+
+
+func _go(i: int) -> void:
+	get_tree().change_scene_to_file(MODES[i][2])
+
+
+# screenshot support for docs: --shots=/abs/dir
+var _frames := 0
+
+
+func _physics_process(_d: float) -> void:
+	_frames += 1
+	if _frames == 30:
+		for a in OS.get_cmdline_user_args():
+			if a.begins_with("--shots="):
+				hover = 1
+				await RenderingServer.frame_post_draw
+				get_viewport().get_texture().get_image().save_png(a.substr(8) + "/menu.png")
+				get_tree().quit()
