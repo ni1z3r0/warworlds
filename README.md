@@ -16,7 +16,7 @@ In every mode, **R** restarts and **M** returns to the menu.
 
 ![The story](docs/screenshots/story.png)
 
-Choose **THE STORY** on the main menu. The campaign is told through Henrique Alvim Corrêa's 31 plates for the 1906 Belgian edition of the novel. They're public domain worldwide; see `art/correa/CREDITS.md`. Each chapter is a run of plates with narration, and text in quotation marks is Wells' own. Read a chapter, then press **Play** if it's built:
+Choose **THE STORY** on the main menu. The campaign is told through Henrique Alvim Corrêa's 31 plates for the 1906 Belgian edition of the novel. They're public domain worldwide; see `art/correa/CREDITS.md`. Each chapter is a run of plates with narration. Text in quotation marks is Wells' own, checked word for word against the Project Gutenberg text in `the-war-of-the-worlds.txt`. Read a chapter, then press **Play** if it's built:
 
 | Chapter | Playable as |
 |---|---|
@@ -32,7 +32,11 @@ Controls: arrow keys or click to turn plates, Enter to play, Esc for the menu.
 
 ## The fighting-machine and its cage
 
-Every machine is our own design, built from Wells' text: a hooded body on three jointed legs, hanging metal tentacles, a single green lens, a heat-ray projector arm, and the **cage on its back**. Wells describes the Martian throwing captives into *"a great metallic carrier which projected behind him, much as a workman's basket hangs over his shoulder."* In all three modes the machines seize people with their tentacles and the cage fills up. Bring a machine down and the people in its cage go free.
+![The machine](docs/screenshots/machine.png)
+
+The machines are styled after **Henrique Alvim Corrêa's 1906 plates**, which are public domain. Each has a wide conical hat with a spike on top, two great round eyes under the brim, a ribbed screw-like body, needle-thin stilt legs with ringed joints, a curtain of hair-thin filaments, ribbed tentacles, and a camera-like heat-ray box held out on an arm. On its back hangs the **cage**. Wells describes the Martian throwing captives into *"a great metallic carrier which projected behind him, much as a workman's basket hangs over his shoulder."* Machines seize people with their tentacles and the cage fills up. Bring a machine down and the people in its cage go free.
+
+To see the 3D machine up close, run the dev scene `scenes/dev/machine_showcase.tscn`.
 
 Shared rules:
 
@@ -102,7 +106,7 @@ Your crews are dead. A fighting-machine stalks the village with two people alrea
 
 The mood is a 1970s painted prog-rock album cover: blood-red skies, burning orange, sickly heat-ray green, black smoke, and silhouettes against fire.
 
-**Legal note:** *The War of the Worlds* novel is in the public domain. *Jeff Wayne's Musical Version* is not. Its machine designs, artwork, music, sound effects and narration belong to Jeff Wayne Music Group. Do not copy them, even renamed. Our machines, the shield mechanic and the cage design are our own, and the cage comes from Wells' text. Keep it that way, or license the musical.
+**Legal note:** *The War of the Worlds* novel is in the public domain. *Jeff Wayne's Musical Version* is not. Its machine designs, artwork, music, sound effects and narration belong to Jeff Wayne Music Group. Do not copy them, even renamed. Our machines follow Alvim Corrêa's public-domain 1906 designs, the cage comes from Wells' text, and the shield mechanic is our own. Keep it that way, or license the musical.
 
 ## Project layout
 

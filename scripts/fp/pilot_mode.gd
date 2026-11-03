@@ -139,15 +139,16 @@ func _move(delta: float) -> void:
 func _update_camera(delta: float) -> void:
 	shake = maxf(0.0, shake - delta * 2.5)
 	var jitter := Vector3(randf() - 0.5, randf() - 0.5, 0) * shake * 0.6
+	machine.set_first_person(not third_person)
 	if third_person:
 		var back := -machine.forward()
 		var target := machine.body_pos()
-		var p := target + back * 48.0 + Vector3(0, 14.0 - pitch * 30.0, 0)
+		var p := target + back * 40.0 + machine.forward().cross(Vector3.UP) * 14.0 + Vector3(0, 2.0 - pitch * 20.0, 0)
 		cam.global_position = p + jitter
 		cam.look_at(target + machine.forward() * 20.0 + Vector3(0, -6, 0), Vector3.UP)
 	else:
 		var b := machine.body.global_transform
-		cam.global_position = b * Vector3(0, 0.9, -7.4) + jitter
+		cam.global_position = b * Vector3(0, -1.0, -4.0) + jitter   # under the brim, between the eyes
 		cam.global_basis = Basis.from_euler(Vector3(pitch + machine.body.rotation.x, machine.rotation.y, machine.body.rotation.z))
 
 

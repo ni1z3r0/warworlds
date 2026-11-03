@@ -455,31 +455,38 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 48, Color(0, 0, 0, 0.35))
 	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
-	# legs
+	# needle-thin stilt legs with ringed joints (after Alvim Corrêa)
+	var hip := hub + Vector2(0, 30)
 	for i in 3:
 		var f := to_local(feet[i]) + Vector2(0, -lift[i] * 16.0)
 		if state == S.DYING:
 			f += (f - Vector2.ZERO).normalized() * dying_t * 18.0
-		var knee := (f + hub) * 0.5 + Vector2(0, -44) + (f - hub).normalized().orthogonal() * 8.0
-		draw_line(f, knee, Color(0.05, 0.03, 0.03), 10.0)
-		draw_line(knee, hub, Color(0.05, 0.03, 0.03), 12.0)
-		draw_line(f, knee, metal, 7.0)
-		draw_line(knee, hub, metal, 9.0)
-		draw_line(f + Vector2(-2.5, 0), knee + Vector2(-2.5, 0), Color(rim, 0.8), 2.0)
-		draw_line(knee + Vector2(-3, 0), hub + Vector2(-3, 0), Color(rim, 0.8), 2.0)
-		draw_circle(knee, 7.0, Color(0.25, 0.19, 0.16))
-		draw_circle(knee, 2.6, Color(0.4, 1.0, 0.5, 0.7))
-		draw_circle(f, 6.0, Color(0.08, 0.06, 0.05))
-		draw_arc(f, 9.0, 0, TAU, 16, Color(0, 0, 0, 0.35), 3.0)
+		var knee := (f + hip) * 0.5 + Vector2(0, -14) + (f - hip).normalized().orthogonal() * 4.0
+		draw_line(f, knee, Color(0.04, 0.03, 0.03), 5.0)
+		draw_line(knee, hip, Color(0.04, 0.03, 0.03), 5.5)
+		draw_line(f, knee, metal, 3.0)
+		draw_line(knee, hip, metal, 3.5)
+		draw_line(f + Vector2(-1.5, 0), knee + Vector2(-1.5, 0), Color(rim, 0.7), 1.2)
+		draw_line(knee + Vector2(-1.5, 0), hip + Vector2(-1.5, 0), Color(rim, 0.7), 1.2)
+		for u in [0.35, 0.7]:
+			for seg in [[hip, knee], [knee, f]]:
+				var p0: Vector2 = seg[0].lerp(seg[1], u)
+				var n: Vector2 = (seg[1] - seg[0]).normalized().orthogonal() * 4.0
+				draw_line(p0 - n, p0 + n, Color(0.05, 0.03, 0.03), 2.5)
+		draw_circle(knee, 4.0, Color(0.3, 0.24, 0.2))
+		draw_circle(f, 4.0, Color(0.08, 0.06, 0.05))
+		draw_arc(f, 7.0, 0, TAU, 16, Color(0, 0, 0, 0.35), 2.0)
 
-	# hanging tentacles
-	for k in 3:
-		var base := hub + Vector2((k - 1) * 16.0, 18.0)
+	# a curtain of hair-thin filaments from under the brim
+	for k in 16:
+		var ax := cos(TAU * k / 16.0) * 44.0
+		var top := hub + Vector2(ax, 6.0 + absf(sin(TAU * k / 16.0)) * 10.0)
+		var len := 34.0 + 16.0 * sin(k * 2.3)
 		var pts := PackedVector2Array()
-		for s in 7:
-			var y := s * 11.0
-			pts.append(base + Vector2(sin(_t * 2.2 + k * 1.9 + s * 0.7) * (s * 1.2), y))
-		draw_polyline(pts, Color(0.30, 0.22, 0.18), 3.0, true)
+		for s2 in 6:
+			var u := s2 / 5.0
+			pts.append(top + Vector2(sin(_t * 1.6 + k + u * 3.0) * 3.0 * u, u * len))
+		draw_polyline(pts, Color(0.12, 0.08, 0.07, 0.8), 1.2, true)
 
 	# the carrier-cage slung behind, like a workman's basket
 	if is_active() or state == S.DYING:
@@ -499,39 +506,49 @@ func _draw() -> void:
 			draw_polyline(pts, Color(0.05, 0.03, 0.03), 5.0, true)
 			draw_polyline(pts, Color(0.55, 0.32, 0.2), 2.0, true)
 
-	# cowled body
+	# the ribbed, screw-like body beneath the hat
+	for k in 6:
+		var y := 4.0 + k * 5.0
+		var rw := 20.0 - k * 2.8
+		draw_set_transform(hub + Vector2(0, y), 0, Vector2(1.0, 0.45))
+		draw_circle(Vector2.ZERO, rw, Color(0.05, 0.03, 0.03))
+		draw_circle(Vector2.ZERO, rw - 1.5, Color(0.42, 0.36, 0.3))
+		draw_arc(Vector2.ZERO, rw - 1.5, 0.2, PI - 0.2, 12, Color(rim, 0.7), 1.5)
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 	var ang := facing.angle()
-	var body := PackedVector2Array()
-	for p in BODY:
-		body.append(hub + (p as Vector2).rotated(ang) * sq)
-	draw_colored_polygon(body, Color(0.24, 0.17, 0.14))
-	var outline := body.duplicate()
-	outline.append(body[0])
-	draw_polyline(outline, Color(0.05, 0.03, 0.03), 3.0, true)
-	# fire-lit lower rim
-	var lower := PackedVector2Array()
-	for idx in [5, 6, 7, 8, 0]:
-		lower.append(body[idx])
-	draw_polyline(lower, Color(rim, 0.95), 3.0, true)
-	# hood ridge and plates
-	draw_line(hub + Vector2(30, 0).rotated(ang) * sq, hub + Vector2(-32, 0).rotated(ang) * sq, Color(0.32, 0.22, 0.18), 3.0)
-	for px in [-14.0, 6.0]:
-		draw_line(hub + Vector2(px, -18).rotated(ang) * sq, hub + Vector2(px, 18).rotated(ang) * sq, Color(0.07, 0.05, 0.04), 1.5)
-	# heat-ray projector arm
-	var arm := hub + Vector2(18, -16).rotated(ang) * sq
-	draw_line(hub + Vector2(4, -12).rotated(ang) * sq, arm, Color(0.25, 0.2, 0.17), 3.0)
-	draw_circle(arm, 3.5, Color(0.3, 0.25, 0.2))
-
-	# the eye / lens
-	var lens := hub + Vector2(30, 0).rotated(ang) * sq
+	# the heat-ray: a camera-like box held out on a ribbed arm
+	var box := hub + Vector2(26, 30).rotated(ang) * sq
+	draw_line(hub + Vector2(0, 14), box, Color(0.05, 0.03, 0.03), 5.0)
+	draw_line(hub + Vector2(0, 14), box, Color(0.45, 0.38, 0.32), 3.0)
+	draw_set_transform(box, ang, Vector2.ONE)
+	draw_rect(Rect2(-7, -6, 14, 12), Color(0.08, 0.06, 0.05))
+	draw_rect(Rect2(-7, -6, 14, 12), Color(rim, 0.6), false, 1.0)
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	var lens := box + facing * 8.0
 	var ca := charge / CHARGE_TIME if state == S.CHARGE else 0.0
 	var pulse := 0.7 + 0.3 * sin(_t * 3.0)
 	if is_active():
-		draw_circle(lens, 16.0 + ca * 22.0, Color(0.3, 1.0, 0.5, 0.2 * pulse + ca * 0.3))
-		draw_circle(lens, 7.5, Color(0.55, 1.0, 0.65))
-		draw_circle(lens, 3.2, Color(0.95, 1.0, 0.9))
-	else:
-		draw_circle(lens, 4.0, Color(0.15, 0.25, 0.15))
+		draw_circle(lens, 9.0 + ca * 18.0, Color(0.3, 1.0, 0.5, 0.18 * pulse + ca * 0.3))
+		draw_circle(lens, 3.5, Color(0.7, 1.0, 0.75))
+	# the wide conical hat, with a spike on top
+	draw_set_transform(hub, 0, Vector2(1.0, 0.55))
+	draw_circle(Vector2.ZERO, 48.0, Color(0.03, 0.02, 0.02))
+	draw_circle(Vector2.ZERO, 46.0, Color(0.36, 0.31, 0.27))
+	draw_circle(Vector2.ZERO, 28.0, Color(0.44, 0.38, 0.33))
+	draw_arc(Vector2.ZERO, 28.0, 0, TAU, 32, Color(0.1, 0.07, 0.06), 1.5)
+	draw_circle(Vector2.ZERO, 10.0, Color(0.52, 0.46, 0.4))
+	draw_arc(Vector2.ZERO, 46.0, 0.15, PI - 0.15, 24, Color(rim, 0.9), 2.5)
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	draw_line(hub, hub + Vector2(0, -26), Color(0.05, 0.03, 0.03), 2.5)
+	draw_line(hub + Vector2(-6, -20), hub + Vector2(6, -20), Color(0.05, 0.03, 0.03), 1.5)
+	draw_circle(hub + Vector2(0, -27), 3.0, Color(0.45, 0.4, 0.35))
+	# two great round eyes, peering from under the brim
+	var front := hub + Vector2(0, 14) + facing * 14.0
+	for side in [-1.0, 1.0]:
+		var e: Vector2 = front + facing.orthogonal() * 8.0 * side
+		draw_circle(e, 6.5, Color(0.03, 0.02, 0.02))
+		draw_circle(e, 5.3, Color(0.93, 0.9, 0.82) if is_active() else Color(0.4, 0.38, 0.35))
+		draw_circle(e + facing * 2.0, 2.4, Color(0.02, 0.02, 0.02))
 
 	# heat-ray: charging line, then the beam
 	if state == S.CHARGE and _valid_target():
@@ -595,13 +612,21 @@ func _draw_cage(hub: Vector2, sq: Vector2) -> void:
 
 
 func _draw_wreck() -> void:
-	var metal := Color(0.12, 0.09, 0.08)
+	var metal := Color(0.3, 0.26, 0.22)
+	var c := Vector2(34, 12)
 	for i in 3:
 		var dir := facing.rotated(PI / 3.0 + i * TAU / 3.0)
-		draw_line(Vector2(34, 12), Vector2(34, 12) + dir * 90.0, metal, 5.0)
-		draw_line(Vector2(34, 12) + dir * 90.0, Vector2(34, 12) + dir * 90.0 + dir.orthogonal() * 20.0, metal, 4.0)
-	var body := PackedVector2Array()
-	for p in BODY:
-		body.append(Vector2(34, 12) + (p as Vector2).rotated(facing.angle() + 0.4) * Vector2(1, 0.78))
-	draw_colored_polygon(body, Color(0.10, 0.07, 0.06))
-	draw_circle(Vector2(34, 12) + facing * 26.0, 4.0, Color(0.15, 0.25, 0.15))
+		draw_line(c, c + dir * 95.0, Color(0.05, 0.03, 0.03), 4.0)
+		draw_line(c, c + dir * 95.0, metal, 2.5)
+	for k in 10:
+		var d := facing.rotated(k * 0.63)
+		draw_line(c + d * 20.0, c + d * (40.0 + 10.0 * sin(k)), Color(0.1, 0.07, 0.06), 1.0)
+	draw_set_transform(c + facing * 10.0, facing.angle() + 0.5, Vector2(1.0, 0.5))
+	draw_circle(Vector2.ZERO, 44.0, Color(0.03, 0.02, 0.02))
+	draw_circle(Vector2.ZERO, 42.0, Color(0.25, 0.21, 0.18))
+	draw_circle(Vector2.ZERO, 24.0, Color(0.3, 0.26, 0.22))
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	for side in [-1.0, 1.0]:
+		var e: Vector2 = c + facing * 30.0 + facing.orthogonal() * 8.0 * side
+		draw_circle(e, 5.0, Color(0.35, 0.33, 0.3))
+		draw_circle(e, 2.0, Color(0.02, 0.02, 0.02))

@@ -86,31 +86,60 @@ func _draw() -> void:
 	# near hills, black
 	_hills(690, 50, 0.0035, 4.0, Color(0.05, 0.01, 0.01))
 
-	# the fighting-machine on the ridge
-	var hub := Vector2(470, 300)
-	var sway := sin(_t * 0.8) * 4.0
-	hub.x += sway
+	# the fighting-machine on the ridge, after Alvim Corrêa: a wide hat with a
+	# spike, two round eyes, a ribbed body, needle legs and a curtain of filaments
+	var hub := Vector2(470, 250)
+	hub.x += sin(_t * 0.8) * 4.0
 	var dark := Color(0.03, 0.0, 0.0)
+	var hip := hub + Vector2(0, 92)
 	var feet := [Vector2(330, 668), Vector2(470, 690), Vector2(640, 660)]
-	var knees := [Vector2(360, 470), Vector2(520, 500), Vector2(610, 450)]
 	for i in 3:
-		draw_line(feet[i], knees[i], dark, 9)
-		draw_line(knees[i], hub, dark, 11)
-		draw_circle(knees[i], 9, dark)
-		draw_line(knees[i] + Vector2(4, 0), hub + Vector2(4, 0), Color(1, 0.45, 0.1, 0.35), 2)
-	for k in 4:
+		var knee: Vector2 = hip.lerp(feet[i], 0.45) + Vector2(0, -26)
+		draw_line(feet[i], knee, dark, 5)
+		draw_line(knee, hip, dark, 6)
+		for u in [0.3, 0.65]:
+			for seg in [[hip, knee], [knee, feet[i]]]:
+				var p0: Vector2 = seg[0].lerp(seg[1], u)
+				var n: Vector2 = (seg[1] - seg[0]).normalized().orthogonal() * 7.0
+				draw_line(p0 - n, p0 + n, dark, 4)
+		draw_circle(knee, 6, dark)
+		draw_line(knee + Vector2(3, 0), hip + Vector2(3, 0), Color(1, 0.45, 0.1, 0.3), 1.5)
+	# filaments
+	for k in 22:
+		var x := -78.0 + k * 7.4
 		var pts := PackedVector2Array()
-		for s in 9:
-			pts.append(hub + Vector2(-30 + k * 18 + sin(_t * 1.5 + k + s * 0.6) * s * 2.0, 30 + s * 14))
-		draw_polyline(pts, dark, 3, true)
-	var cowl := PackedVector2Array([hub + Vector2(-90, 10), hub + Vector2(-70, -40), hub + Vector2(-10, -66),
-		hub + Vector2(60, -50), hub + Vector2(100, -10), hub + Vector2(70, 26), hub + Vector2(-40, 34)])
-	draw_colored_polygon(cowl, dark)
-	draw_polyline(PackedVector2Array([hub + Vector2(-70, -40), hub + Vector2(-10, -66), hub + Vector2(60, -50), hub + Vector2(100, -10)]),
-		Color(1, 0.4, 0.1, 0.55), 3, true)
-	var eye := hub + Vector2(84, -6)
-	draw_circle(eye, 26, Color(0.4, 1.0, 0.5, 0.15))
-	draw_circle(eye, 9, Color(0.6, 1.0, 0.7))
+		var top := hub + Vector2(x, 18 - absf(x) * 0.12)
+		var len := 110.0 + 50.0 * sin(k * 1.7)
+		for s2 in 8:
+			var u := s2 / 7.0
+			pts.append(top + Vector2(sin(_t * 1.2 + k + u * 3.0) * 6.0 * u, u * len))
+		draw_polyline(pts, dark, 1.5, true)
+	# ribbed body
+	for k in 6:
+		var w2 := 30.0 - k * 4.0
+		var y := 34.0 + k * 11.0
+		draw_rect(Rect2(hub + Vector2(-w2, y), Vector2(w2 * 2, 8)), dark)
+	draw_colored_polygon(PackedVector2Array([hub + Vector2(-10, 100), hub + Vector2(10, 100), hub + Vector2(0, 116)]), dark)
+	# the hat
+	draw_colored_polygon(PackedVector2Array([hub + Vector2(-96, 22), hub + Vector2(-20, -30), hub + Vector2(20, -30), hub + Vector2(96, 22), hub + Vector2(60, 26), hub + Vector2(-60, 26)]), dark)
+	draw_rect(Rect2(hub + Vector2(-22, -40), Vector2(44, 12)), dark)
+	draw_line(hub + Vector2(0, -40), hub + Vector2(0, -88), dark, 3)
+	draw_line(hub + Vector2(-12, -74), hub + Vector2(12, -74), dark, 2)
+	draw_circle(hub + Vector2(0, -90), 5, dark)
+	draw_polyline(PackedVector2Array([hub + Vector2(-96, 22), hub + Vector2(-20, -30), hub + Vector2(20, -30), hub + Vector2(96, 22)]), Color(1, 0.4, 0.1, 0.5), 2.5, true)
+	# head and two great round eyes under the brim
+	draw_circle(hub + Vector2(0, 30), 32, dark)
+	for side in [-1.0, 1.0]:
+		var e := hub + Vector2(side * 15.0 + 6.0, 30)
+		draw_circle(e, 11, Color(0.95, 0.9, 0.8))
+		draw_circle(e + Vector2(3, 1), 5, dark)
+	# the heat-ray box, held out on a ribbed arm
+	var arm := [hub + Vector2(20, 60), hub + Vector2(60, 70), hub + Vector2(92, 52)]
+	draw_polyline(PackedVector2Array(arm), dark, 6, true)
+	draw_rect(Rect2(hub + Vector2(86, 40), Vector2(26, 22)), dark)
+	var eye := hub + Vector2(116, 51)
+	draw_circle(eye, 22, Color(0.4, 1.0, 0.5, 0.15))
+	draw_circle(eye, 7, Color(0.6, 1.0, 0.7))
 
 	# the heat-ray sweeping the town
 	var ray_end := Vector2(1040 + sin(_t * 0.7) * 120.0, 545)

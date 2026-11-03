@@ -5,7 +5,8 @@ extends RefCounted
 ## Duke University Libraries via The Public Domain Review).
 ##
 ## Each plate has narration. Text in "quotes" is H. G. Wells' own (public
-## domain); everything else is our narration.
+## domain), checked word for word against the Project Gutenberg text in
+## the-war-of-the-worlds.txt; everything else is our narration.
 
 const BOOK_ONE := "BOOK ONE  -  THE COMING OF THE MARTIANS"
 const BOOK_TWO := "BOOK TWO  -  THE EARTH UNDER THE MARTIANS"
@@ -31,7 +32,7 @@ const CHAPTERS := [
 			["plate_0035.jpg", "In the sand-pit lay a great cylinder, hot and smoking. Crowds gathered. Its top began, very slowly, to unscrew."],
 			["plate_0043.jpg", "\"Those who have never seen a living Martian can scarcely imagine the strange horror of its appearance.\""],
 			["plate_0051.jpg", "Then the heat-ray. Men stepped into an invisible flame and were gone. The crowd broke and ran."],
-			["plate_0059.jpg", "By nightfall the common was burning, and a machine had risen from the pit. Get the survivors out."],
+			["plate_0059.jpg", "By nightfall the common was silent, and \"the charred bodies lay about on it all night under the stars.\" Then a machine rose from the pit. Get the survivors out."],
 		],
 	},
 	{
@@ -50,7 +51,7 @@ const CHAPTERS := [
 		"mode": "First person: the gunner",
 		"plates": [
 			["plate_0099.jpg", "At the meeting of the Wey and the Thames, the machines came striding, their hoods turning, their cages swinging."],
-			["plate_0111.jpg", "The hidden guns opened fire, and \"the shell burst clean in the face of the Thing.\" A machine could be brought down."],
+			["plate_0111.jpg", "The hidden guns opened fire. \"The shell burst clean in the face of the Thing.\" A machine could be brought down."],
 			["plate_0123.jpg", "It fell into the river in a storm of steam. The others came wading through the shallows, burning everything."],
 			["plate_0143.jpg", "They gathered up their fallen comrade and carried it away. Take a gun. Bring one down. Free the people in its cage."],
 		],
@@ -77,8 +78,8 @@ const CHAPTERS := [
 		"book": BOOK_ONE,
 		"scene": "",
 		"plates": [
-			["plate_0159.jpg", "Off the Essex coast, the steamers crowded with refugees. Then the ironclad came: \"It was the torpedo-ram, Thunder Child, steaming headlong, coming to the rescue of the threatened shipping.\""],
-			["plate_0167.jpg", "She took two machines down with her. Over the sea, something flat and broad flew low through the haze. Coming soon."],
+			["plate_0159.jpg", "Off the Essex coast, the steamers crowded with refugees. Then the ironclad came: \"It was the torpedo ram, Thunder Child, steaming headlong, coming to the rescue of the threatened shipping.\""],
+			["plate_0167.jpg", "She took two machines down with her. Then, out of the greyness, \"something flat and broad, and very large, that swept round in a vast curve.\" Coming soon."],
 		],
 	},
 	{

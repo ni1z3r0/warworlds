@@ -1,8 +1,10 @@
 class_name Tripod3D
 extends Node3D
 ## 3D Martian fighting-machine, shared by both first-person modes.
-## Original design built from Wells' text: a cowled body on three jointed legs,
-## hanging metal tentacles, a single green lens, a heat-ray projector arm, and
+## Styled after Henrique Alvim Corrêa's 1906 illustrations (public domain): a
+## wide conical hat with a spike, two great round eyes, a ribbed screw-like
+## body, needle-thin legs with ringed joints, a curtain of hair-thin filaments,
+## ribbed tentacles, a camera-like heat-ray box on an arm, and Wells
 ## "a great metallic carrier which projected behind him, much as a workman's
 ## basket hangs over his shoulder" - the cage its captives are thrown into.
 ##
@@ -11,8 +13,8 @@ extends Node3D
 ## The node's origin sits on the ground; forward is -Z.
 
 const H := 28.0          # body height
-const REACH := 13.0      # foot distance from centre
-const SEG := 19.5        # leg segment length
+const REACH := 11.0      # foot distance from centre
+const SEG := 13.6        # leg segment length (long, nearly straight stilts)
 const CAGE_SIZE := 6
 
 var body: Node3D
@@ -27,7 +29,7 @@ var beam_light: OmniLight3D
 var beam_on := false
 var beam_target := Vector3.ZERO
 var charge := 0.0            # 0..1, glows the lens
-var shield_strength := 0.35  # 0 hides the shield
+var shield_strength := 0.14  # 0 hides the shield
 var shield_flash := 0.0
 var collapse := 0.0          # 0..1 death animation
 var captives := 0
@@ -43,6 +45,8 @@ var _lower: Array[MeshInstance3D] = []
 var _knees: Array[MeshInstance3D] = []
 var _feet_m: Array[MeshInstance3D] = []
 var _tent: Array = []
+var _filaments: Array[MeshInstance3D] = []
+var _rings: Array[MeshInstance3D] = []
 var feet: Array[Vector3] = []
 var _from: Array[Vector3] = []
 var _to: Array[Vector3] = []
@@ -52,46 +56,83 @@ var _last_pos := Vector3.ZERO
 
 
 func _ready() -> void:
-	_metal = _mat(Color(0.22, 0.15, 0.11), 0.8, 0.42)
-	_dark = _mat(Color(0.07, 0.05, 0.04), 0.6, 0.6)
+	_metal = _mat(Color(0.55, 0.5, 0.44), 0.55, 0.45)
+	_dark = _mat(Color(0.12, 0.1, 0.09), 0.5, 0.6)
 	body = Node3D.new()
 	body.position = Vector3(0, H, 0)
 	add_child(body)
 
-	# cowl: a long, hooded carapace
-	var cowl := _mesh(_sphere(1.0), _metal, body)
-	cowl.scale = Vector3(4.3, 2.5, 6.2)
-	var hood := _mesh(_sphere(1.0), _metal, body)
-	hood.scale = Vector3(3.6, 1.6, 4.4)
-	hood.position = Vector3(0, 1.7, -0.8)
-	var ridge := _mesh(_box(Vector3(0.7, 0.7, 10.0)), _dark, body)
-	ridge.position = Vector3(0, 3.1, 0.2)
-	var brow := _mesh(_box(Vector3(5.2, 0.8, 2.4)), _metal, body)
-	brow.position = Vector3(0, 1.4, -5.2)
-	brow.rotation.x = -0.35
-	var skirt := _mesh(_cyl(3.6, 4.4, 1.4), _dark, body)
-	skirt.position = Vector3(0, -2.0, 0)
+	# --- after Alvim Corrêa's 1906 plates ---
+	# a wide conical hat with a spike on top
+	var hat := _mesh(_cyl(0.4, 7.4, 2.4), _metal, body)
+	hat.position = Vector3(0, 1.6, 0)
+	var brim := _mesh(_cyl(7.8, 7.8, 0.18), _dark, body)
+	brim.position = Vector3(0, 0.42, 0)
+	var band := _mesh(_cyl(2.2, 2.4, 0.5), _dark, body)
+	band.position = Vector3(0, 2.6, 0)
+	var spike := _mesh(_cyl(0.06, 0.16, 3.0), _dark, body)
+	spike.position = Vector3(0, 4.3, 0)
+	var knob := _mesh(_sphere(0.38), _metal, body)
+	knob.position = Vector3(0, 5.9, 0)
+	var vane := _mesh(_box(Vector3(1.6, 0.08, 0.08)), _dark, body)
+	vane.position = Vector3(0, 5.2, 0)
+	# the head under the brim, with two great round eyes
+	var head := _mesh(_sphere(2.6), _dark, body)
+	head.scale = Vector3(1.0, 0.8, 1.0)
+	head.position = Vector3(0, -0.6, 0)
+	var white := _emit(Color(0.92, 0.9, 0.82), 0.6)
+	var black := _mat(Color(0.02, 0.02, 0.02), 0.2, 0.3)
 	for side in [-1.0, 1.0]:
-		var plate := _mesh(_box(Vector3(0.3, 2.2, 7.0)), _dark, body)
-		plate.position = Vector3(side * 4.0, 0.2, 0.0)
+		var eye := _mesh(_sphere(0.9), white, body)
+		eye.position = Vector3(side * 1.15, -0.45, -2.15)
+		var pupil := _mesh(_sphere(0.42), black, body)
+		pupil.position = Vector3(side * 1.1, -0.5, -2.95)
+	# a ribbed, screw-like body tapering beneath
+	var rib_y := -2.4
+	var rib_r := 2.2
+	for k in 6:
+		var rib := _mesh(_cyl(rib_r, rib_r * 0.92, 0.5), _metal, body)
+		rib.position = Vector3(0, rib_y, 0)
+		var gap := _mesh(_cyl(rib_r * 0.8, rib_r * 0.8, 0.3), _dark, body)
+		gap.position = Vector3(0, rib_y - 0.4, 0)
+		rib_y -= 0.8
+		rib_r *= 0.86
+	var tip := _mesh(_cyl(0.8, 0.15, 1.4), _dark, body)
+	tip.position = Vector3(0, rib_y - 0.3, 0)
 
-	# the eye
+	# the heat-ray: a camera-like box held out on a ribbed arm
+	var arm_pts := [Vector3(1.6, -3.0, -0.6), Vector3(3.4, -3.6, -2.0), Vector3(4.4, -3.0, -3.8), Vector3(4.6, -2.3, -5.4)]
+	for k in arm_pts.size() - 1:
+		var seg := _mesh(_cyl(1, 1, 1), _metal, body)
+		_local_segment(seg, arm_pts[k], arm_pts[k + 1], 0.3)
+		var ring := _mesh(_cyl(0.42, 0.42, 0.25), _dark, body)
+		_local_segment(ring, arm_pts[k].lerp(arm_pts[k + 1], 0.45), arm_pts[k].lerp(arm_pts[k + 1], 0.55), 0.42)
+	var box := _mesh(_box(Vector3(1.3, 1.1, 1.8)), _dark, body)
+	box.position = Vector3(4.6, -2.3, -6.0)
+	var hood_box := _mesh(_box(Vector3(1.5, 0.15, 0.9)), _metal, body)
+	hood_box.position = Vector3(4.6, -1.65, -6.6)
 	lens_mat = _emit(Color(0.35, 1.0, 0.5), 5.0)
-	lens = _mesh(_sphere(0.95), lens_mat, body)
-	lens.position = Vector3(0, 0.2, -6.0)
+	lens = _mesh(_cyl(0.42, 0.42, 0.3), lens_mat, body)
+	lens.rotation.x = PI / 2
+	lens.position = Vector3(4.6, -2.3, -6.95)
 	lens_light = OmniLight3D.new()
 	lens_light.light_color = Color(0.4, 1.0, 0.55)
 	lens_light.omni_range = 22.0
 	lens_light.light_energy = 1.5
-	lens_light.position = Vector3(0, 0.2, -8.0)
+	lens_light.position = Vector3(4.6, -2.3, -8.5)
 	body.add_child(lens_light)
-
-	# heat-ray projector arm
-	var arm := _mesh(_box(Vector3(0.7, 0.7, 4.5)), _metal, body)
-	arm.position = Vector3(3.4, 1.1, -3.4)
-	var proj := _mesh(_cyl(0.55, 0.85, 1.8), _dark, body)
-	proj.position = Vector3(3.4, 1.1, -5.8)
-	proj.rotation.x = PI / 2
+	# a second, coiled ribbed tentacle on the left
+	var coil := [Vector3(-1.6, -3.2, -0.4), Vector3(-3.6, -4.0, -1.6), Vector3(-4.6, -5.6, -1.0), Vector3(-4.0, -6.8, 0.2), Vector3(-3.0, -6.2, -0.6), Vector3(-3.4, -5.0, -1.8)]
+	for k in coil.size() - 1:
+		var seg := _mesh(_cyl(1, 1, 1), _metal, body)
+		_local_segment(seg, coil[k], coil[k + 1], 0.24)
+	# a curtain of hair-thin filaments hanging from under the brim
+	for k in 18:
+		var a := TAU * k / 18.0
+		var f := _mesh(_cyl(1, 1, 1), _dark, body)
+		var top := Vector3(cos(a) * 5.5, 0.3, sin(a) * 5.5)
+		_local_segment(f, top, top + Vector3(randf_range(-0.6, 0.6), -randf_range(5.0, 9.0), randf_range(-0.6, 0.6)), 0.05)
+		_filaments.append(f)
 
 	_build_cage()
 
@@ -101,11 +142,13 @@ func _ready() -> void:
 	for i in 3:
 		_upper.append(_world_mesh(_cyl(1, 1, 1), _metal))
 		_lower.append(_world_mesh(_cyl(1, 1, 1), _metal))
-		var k := _world_mesh(_sphere(1.1), joint)
+		for r in 4:
+			_rings.append(_world_mesh(_cyl(1, 1, 1), joint))
+		var k := _world_mesh(_sphere(0.7), joint)
 		var kl := _mesh(_sphere(0.35), glow, k)
 		kl.position = Vector3(0, 0, -1.0)
 		_knees.append(k)
-		_feet_m.append(_world_mesh(_cyl(1.2, 1.8, 0.8), _dark))
+		_feet_m.append(_world_mesh(_cyl(0.5, 1.0, 0.6), _dark))
 		var f := _ideal_foot(i)
 		feet.append(f)
 		_from.append(f)
@@ -145,13 +188,13 @@ func _ready() -> void:
 
 func _build_cage() -> void:
 	cage = Node3D.new()
-	cage.position = Vector3(0, -2.2, 8.6)
+	cage.position = Vector3(0, -5.5, 7.0)
 	body.add_child(cage)
 	var bar := _mat(Color(0.18, 0.13, 0.1), 0.85, 0.5)
 	for side in [-1.6, 1.6]:
 		var strut := _mesh(_box(Vector3(0.4, 0.4, 4.8)), _metal, body)
-		strut.position = Vector3(side, 0.6, 5.6)
-		strut.rotation.x = 0.45
+		strut.position = Vector3(side, -3.0, 4.2)
+		strut.rotation.x = 0.55
 	var r := 2.8
 	var h := 4.6
 	for y in [h * 0.5, -h * 0.5, 0.0]:
@@ -184,6 +227,12 @@ func _build_cage() -> void:
 		_captive_meshes.append(person)
 
 
+## Hide the parts that would block a pilot's view from under the brim.
+func set_first_person(on: bool) -> void:
+	for f in _filaments:
+		f.visible = not on
+
+
 func set_captives(n: int) -> void:
 	captives = clampi(n, 0, CAGE_SIZE)
 	for k in _captive_meshes.size():
@@ -202,13 +251,14 @@ func body_pos() -> Vector3:
 	return body.global_position
 
 
+## Between the two eyes: where the machine looks from.
 func lens_pos() -> Vector3:
-	return lens.global_position
+	return body.global_transform * Vector3(0, -0.5, -3.0)
 
 
 ## Where the heat-ray leaves the projector arm on the machine's right side.
 func ray_origin() -> Vector3:
-	return body.global_transform * Vector3(2.4, -0.4, -9.8)
+	return body.global_transform * Vector3(4.6, -2.3, -7.2)
 
 
 ## Turn toward a world direction at a limited rate. Returns the remaining angle.
@@ -299,7 +349,7 @@ func _update_feet(delta: float, vel: Vector3) -> void:
 func _draw_legs() -> void:
 	for i in 3:
 		var a := i * TAU / 3.0
-		var hip := body.global_transform * Vector3(sin(a) * 2.6, -2.4, cos(a) * 2.6)
+		var hip := body.global_transform * Vector3(sin(a) * 1.0, -6.4, cos(a) * 1.0)
 		var foot := feet[i]
 		var v := foot - hip
 		var d := v.length()
@@ -309,8 +359,14 @@ func _draw_legs() -> void:
 			perp = Vector3.RIGHT
 		var bend := sqrt(maxf(SEG * SEG - d * d * 0.25, 1.0))
 		var knee := mid + perp.normalized() * bend
-		_segment(_upper[i], hip, knee, 0.55)
-		_segment(_lower[i], knee, foot, 0.45)
+		_segment(_upper[i], hip, knee, 0.3)
+		_segment(_lower[i], knee, foot, 0.24)
+		for r in 4:
+			var ring := _rings[i * 4 + r]
+			if r < 2:
+				_segment(ring, hip.lerp(knee, 0.3 + r * 0.35), hip.lerp(knee, 0.33 + r * 0.35), 0.45)
+			else:
+				_segment(ring, knee.lerp(foot, 0.25 + (r - 2) * 0.4), knee.lerp(foot, 0.28 + (r - 2) * 0.4), 0.38)
 		_knees[i].global_position = knee
 		_feet_m[i].global_transform = Transform3D(Basis.IDENTITY, foot + Vector3(0, 0.4, 0))
 
@@ -318,7 +374,7 @@ func _draw_legs() -> void:
 func _draw_tentacles(_delta: float) -> void:
 	for k in _tent.size():
 		var chain: Array = _tent[k]
-		var base := body.global_transform * Vector3((k - 1.5) * 1.4, -2.6, -1.0 + (k % 2) * 1.5)
+		var base := body.global_transform * Vector3((k - 1.5) * 0.9, -6.6, -0.5 + (k % 2) * 1.0)
 		var pts: Array[Vector3] = [base]
 		var p := base
 		for s in chain.size():
@@ -349,6 +405,18 @@ func _segment(mi: MeshInstance3D, a: Vector3, b: Vector3, r: float) -> void:
 	x = x.normalized()
 	var z := x.cross(y).normalized()
 	mi.global_transform = Transform3D(Basis(x * r, y * len, z * r), (a + b) * 0.5)
+
+
+func _local_segment(mi: MeshInstance3D, a: Vector3, b: Vector3, r: float) -> void:
+	var d := b - a
+	var len := d.length()
+	var y := d / len
+	var x := y.cross(Vector3.FORWARD)
+	if x.length() < 0.01:
+		x = y.cross(Vector3.RIGHT)
+	x = x.normalized()
+	var z := x.cross(y).normalized()
+	mi.transform = Transform3D(Basis(x * r, y * len, z * r), (a + b) * 0.5)
 
 
 func _world_mesh(m: Mesh, mat: Material) -> MeshInstance3D:

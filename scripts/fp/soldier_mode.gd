@@ -325,7 +325,7 @@ func _machine(delta: float) -> void:
 		if time - _flicker_msg_t > 15.0:
 			_flicker_msg_t = time
 			log_msg("Its shield is FLICKERING. Fire now!")
-	machine.shield_strength = 0.35 if shield_up() else (0.12 * randf() if flicker > 0.0 or shield_broken > 0.0 else 0.0)
+	machine.shield_strength = 0.14 if shield_up() else (0.12 * randf() if flicker > 0.0 or shield_broken > 0.0 else 0.0)
 	if sickness >= 1.0:
 		_machine_down("struck down by Earth's bacteria")
 		return
