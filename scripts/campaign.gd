@@ -172,7 +172,7 @@ func _draw() -> void:
 		draw_string(font, Vector2(tx, h - 310), "IN THIS CHAPTER", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(AMBER, 0.6))
 		_cast_rects.clear()
 		for i in people.size():
-			var r := Rect2(tx + (i % 7) * 46, h - 300 + (i / 7) * 62, 42, 56)
+			var r := Rect2(tx + (i % 7) * 46, h - 300 + floorf(i / 7.0) * 62, 42, 56)
 			draw_texture_rect(Cast.portrait(people[i]), r, false)
 			draw_rect(r, Color(AMBER, 0.5), false, 1.0)
 			_cast_rects.append([r, people[i]])
@@ -249,10 +249,6 @@ func _play() -> void:
 	if chapter == _cast_index() or not _playable(chapter):
 		return
 	CampaignState.play(chapter)
-	return
-	var s: String = Story.CHAPTERS[chapter].scene
-	if s != "":
-		get_tree().change_scene_to_file(s)
 
 
 func _gui_input(event: InputEvent) -> void:

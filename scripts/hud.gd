@@ -56,7 +56,7 @@ func _draw() -> void:
 			elif u.captured:
 				taken += 1
 	var mt: float = main.mission_time
-	_text(Vector2(24, 78), "Escaped %d / 3     Lost %d     Caged %d     %d:%02d" % [esc, lost, taken, int(mt) / 60, int(mt) % 60], 13, Color(cream, 0.8))
+	_text(Vector2(24, 78), "Escaped %d / 3     Lost %d     Caged %d     %d:%02d" % [esc, lost, taken, int(mt / 60.0), int(mt) % 60], 13, Color(cream, 0.8))
 
 	# the machine
 	var t: Tripod = main.tripod

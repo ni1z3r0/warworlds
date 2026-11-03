@@ -6,6 +6,8 @@ extends Node2D
 const W := 1600
 const H := 900
 const CELL := 16
+const COLS := 100   # W / CELL
+const ROWS := 56    # H / CELL, rounded down
 
 var buildings: Array[Rect2] = []
 var burning: Array[int] = []
@@ -189,18 +191,18 @@ func _seg_hits_rect(a: Vector2, b: Vector2, r: Rect2) -> bool:
 # ---------------------------------------------------------------- pathfinding
 
 func _build_nav() -> void:
-	astar.region = Rect2i(0, 0, W / CELL, H / CELL)
+	astar.region = Rect2i(0, 0, COLS, ROWS)
 	astar.cell_size = Vector2(CELL, CELL)
 	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	astar.update()
-	for cx in range(W / CELL):
-		for cy in range(H / CELL):
+	for cx in range(COLS):
+		for cy in range(ROWS):
 			if blocked(Vector2(cx * CELL + CELL * 0.5, cy * CELL + CELL * 0.5)):
 				astar.set_point_solid(Vector2i(cx, cy), true)
 
 
 func _cell(p: Vector2) -> Vector2i:
-	return Vector2i(clampi(int(p.x / CELL), 0, W / CELL - 1), clampi(int(p.y / CELL), 0, H / CELL - 1))
+	return Vector2i(clampi(int(p.x / CELL), 0, COLS - 1), clampi(int(p.y / CELL), 0, ROWS - 1))
 
 
 func _nearest_free(c: Vector2i) -> Vector2i:

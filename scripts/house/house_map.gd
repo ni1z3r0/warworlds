@@ -8,6 +8,8 @@ extends Node2D
 const W := 1600
 const H := 900
 const CELL := 10
+const COLS := 160   # W / CELL
+const ROWS := 90    # H / CELL
 
 ## Solid walls and rubble.
 var walls: Array[Rect2] = [
@@ -117,12 +119,12 @@ func room_of(p: Vector2) -> String:
 # ---------------------------------------------------------------- pathfinding
 
 func _build_nav() -> void:
-	astar.region = Rect2i(0, 0, W / CELL, H / CELL)
+	astar.region = Rect2i(0, 0, COLS, ROWS)
 	astar.cell_size = Vector2(CELL, CELL)
 	astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	astar.update()
-	for cx in range(W / CELL):
-		for cy in range(H / CELL):
+	for cx in range(COLS):
+		for cy in range(ROWS):
 			var p := Vector2(cx * CELL + CELL * 0.5, cy * CELL + CELL * 0.5)
 			var outside_house := p.x > 1060 and not hole_open
 			astar.set_point_solid(Vector2i(cx, cy), solid(p, 8.0) or outside_house or p.x < 230)
@@ -131,13 +133,13 @@ func _build_nav() -> void:
 
 
 func path(from: Vector2, to: Vector2, through_hole := false) -> PackedVector2Array:
-	var a := Vector2i(clampi(int(from.x / CELL), 0, W / CELL - 1), clampi(int(from.y / CELL), 0, H / CELL - 1))
-	var b := Vector2i(clampi(int(to.x / CELL), 0, W / CELL - 1), clampi(int(to.y / CELL), 0, H / CELL - 1))
+	var a := Vector2i(clampi(int(from.x / CELL), 0, COLS - 1), clampi(int(from.y / CELL), 0, ROWS - 1))
+	var b := Vector2i(clampi(int(to.x / CELL), 0, COLS - 1), clampi(int(to.y / CELL), 0, ROWS - 1))
 	var plugged := []
 	if through_hole and not hole_open:
 		# the tentacle can reach in through the rubble in the hole
-		for cx in range(int(1030 / CELL), int(1070 / CELL) + 1):
-			for cy in range(int(450 / CELL), int(512 / CELL) + 1):
+		for cx in range(103, 108):   # x 1030-1070
+			for cy in range(45, 52):   # y 450-512
 				var c := Vector2i(cx, cy)
 				if astar.is_point_solid(c):
 					plugged.append(c)

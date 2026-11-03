@@ -598,7 +598,7 @@ func _draw_cage(hub: Vector2, sq: Vector2) -> void:
 	draw_circle(Vector2.ZERO, r, Color(0.05, 0.03, 0.03, 0.85))
 	var i := 0
 	for u in captives:
-		var p := Vector2(-6 + (i % 2) * 12, -6 + (i / 2) * 12) + Vector2(sin(_t * 3.0 + i), cos(_t * 2.0 + i)) * 1.5
+		var p := Vector2(-6 + (i % 2) * 12, -6 + floorf(i / 2.0) * 12) + Vector2(sin(_t * 3.0 + i), cos(_t * 2.0 + i)) * 1.5
 		draw_circle(p, 4.5, (u as Survivor).coat if u is Survivor else Color(0.5, 0.4, 0.3))
 		draw_circle(p + Vector2(1.5, 0), 2.2, Color(0.9, 0.75, 0.6))
 		i += 1
