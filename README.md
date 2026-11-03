@@ -26,9 +26,25 @@ Choose **THE STORY** on the main menu. The campaign is told through Henrique Alv
 | III. The Guns at Shepperton | First person: the gunner |
 | Interlude: The Martian | First person: the fighting-machine |
 | IV. The Exodus, V. The *Thunder Child* | coming soon |
-| VI. The Ruined House, VII. The Red Weed, VIII. Dead London | coming soon |
+| VI. The Ruined House | Stealth |
+| VII. The Red Weed, VIII. Dead London | coming soon |
 
 Controls: arrow keys or click to turn plates, Enter to play, Esc for the menu.
+
+## VI. The Ruined House (stealth)
+
+![The ruined house](docs/screenshots/house.png)
+
+Book Two, chapters I to V. The fifth cylinder has buried the house where the Narrator shelters with the Curate, right beside the Martians' pit. Survive fifteen days, which are compressed to 20 seconds each (about five minutes in total).
+
+- **Keep quiet.** Shift hurries but is loud, and the white shards of crockery are loud underfoot ("You can't possibly move without making a noise"). Noise draws a tentacle in through the hole.
+- **Stay out of the green light.** When the light turns toward the house, anyone standing in it is seen.
+- **Keep the Curate sane.** His nerve drains, faster after the Martians feed (day 3 and day 9). Bring him food from the pantry (E) and hold E beside him to calm him. If he breaks, he preaches, then heads for the hole shouting Wells' own lines. Stop him as the narrator did, with the butt of the meat chopper (F).
+- **The coal cellar.** Bury yourself in the coal (E). If the tentacle touches your boot, don't move.
+- **The peephole** shows Corrêa's plates of the pit, plus how alert the Martians are and when the light will next sweep.
+- **Day 15:** the pit is empty. Climb out through the hole. If the Curate is still with you, you get an ending Wells never gave him.
+
+![The peephole](docs/screenshots/house_peephole.png)
 
 ## The cast: Wells' characters
 
@@ -148,6 +164,7 @@ scripts/fp/countryside3d.gd 3D world: sky, fog, village, woods, river, pit, fire
 scripts/fp/pilot_mode.gd    pilot mode (+ pilot_hud.gd)
 scripts/fp/soldier_mode.gd  soldier mode and the machine's AI (+ soldier_hud.gd)
 scripts/fp/gun3d.gd, shell3d.gd, person3d.gd, fire3d.gd, smoke3d.gd, explosion3d.gd
+scripts/house/               VI. The Ruined House: house_mode.gd, house_map.gd, tentacle.gd, house_hud.gd
 
 shaders/grade.gdshader      RTS colour grade
 shaders/shield.gdshader     3D shield shimmer
@@ -162,6 +179,7 @@ godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=a     # RTS
 godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=e     # RTS: capture into the cage, then rescue
 godot --headless --fixed-fps 60 res://scenes/pilot.tscn -- --autotest      # pilot mode
 godot --headless --fixed-fps 60 res://scenes/soldier.tscn -- --autotest    # soldier mode: a test gunner duels the machine
+godot --headless --fixed-fps 60 res://scenes/ruined_house.tscn -- --autotest=wells   # the house, as in the novel (also: --autotest, --autotest=caught)
 ```
 
 To save screenshots, add `--shots=/abs/path --shot-times=3,7` (this needs a display, or `xvfb-run`).

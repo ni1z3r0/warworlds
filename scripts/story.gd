@@ -93,14 +93,15 @@ const CHAPTERS := [
 		"title": "VI. The Ruined House",
 		"cast": ["narrator", "curate", "martian"],
 		"book": BOOK_TWO,
-		"scene": "",
+		"scene": "res://scenes/ruined_house.tscn",
+		"mode": "Stealth: fifteen days beside the pit",
 		"plates": [
 			["plate_0183.jpg", "The fifth cylinder fell on the house where the narrator sheltered with the curate, and buried them alive."],
 			["plate_0195.jpg", "Through a crack in the wall they could see into the new pit. A machine stood over it."],
 			["plate_0203.jpg", "The Martians' handling-machines worked day and night, building, digging, feeding."],
 			["plate_0211.jpg", "The curate broke. He would not be quiet. The narrator had to choose."],
 			["plate_0223.jpg", "A tentacle came through the hole in the wall, searching the scullery in the dark."],
-			["plate_0247.jpg", "Fifteen days later, the pit was empty. Coming soon: a stealth chapter inside the ruined house."],
+			["plate_0247.jpg", "Fifteen days later, the pit was empty. Survive until then. Keep the Curate quiet, and keep out of the light."],
 		],
 	},
 	{
