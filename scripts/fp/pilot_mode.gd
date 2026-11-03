@@ -37,6 +37,7 @@ var time := 0.0
 var ended := false
 var result := ""
 var paused := false
+var show_help := true   # controls panel; F1 or H toggles
 var _sick_msgs := 0
 var _flicker_msg_t := -99.0
 
@@ -454,6 +455,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				third_person = not third_person
 			KEY_R:
 				get_tree().reload_current_scene()
+			KEY_F1, KEY_H:
+				show_help = not show_help
 			KEY_M:
 				get_tree().change_scene_to_file("res://scenes/menu.tscn")
 

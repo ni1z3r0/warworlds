@@ -77,7 +77,7 @@ func _draw() -> void:
 		if i < mode.machine.captives:
 			draw_circle(p, 7, Color(0.9, 0.75, 0.6))
 		draw_arc(p, 9, 0, TAU, 16, Color(GREEN, 0.6), 1.5)
-	draw_string(font, Vector2(rx, y + 60), "RMB/E grab   LMB heat-ray   V view", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.45))
+	draw_string(font, Vector2(rx, y + 60), "F1  controls guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.45))
 
 	# messages, top centre
 	var my := 70.0
@@ -94,6 +94,21 @@ func _draw() -> void:
 	if mode.shake > 0.4:
 		draw_rect(Rect2(0, 0, w, h), Color(1, 0.4, 0.1, (mode.shake - 0.4) * 0.25))
 
+	if mode.show_help and not mode.ended:
+		_help([
+			["GOAL", "Silence all 5 artillery batteries."],
+			["", "Fill your cage with humans."],
+			["", "Finish before Earth's air kills you."],
+			["", ""],
+			["Mouse", "look and steer"],
+			["W A S D / Shift", "walk / stride faster"],
+			["Hold left mouse", "HEAT-RAY (watch the energy ring)"],
+			["Right-click or E", "grab a nearby human into the cage"],
+			["F", "fire a black-smoke canister"],
+			["V", "cockpit view / view from behind"],
+			["Esc  /  R  /  M", "pause / restart / main menu"],
+			["F1 or H", "show or hide this guide"],
+		], "THE FIGHTING-MACHINE")
 	if mode.paused and not mode.ended:
 		_overlay(w, h, "PAUSED", "Esc resume     R restart     M main menu", AMBER)
 	if mode.ended:
@@ -150,3 +165,16 @@ func _overlay(w: float, h: float, head: String, sub: String, c: Color) -> void:
 	var lines := sub.split("\n")
 	for i in lines.size():
 		draw_string(font, Vector2(0, h * 0.42 + 50 + i * 24), lines[i], HORIZONTAL_ALIGNMENT_CENTER, w, 17, Color(1, 0.92, 0.8))
+
+
+func _help(lines: Array, title: String) -> void:
+	var w := 590.0
+	var h := 50.0 + lines.size() * 22.0
+	var r := Rect2(24, size.y * 0.5 - h * 0.5, w, h)
+	draw_rect(r, Color(0.05, 0.02, 0.02, 0.82))
+	draw_rect(r, Color(0.8, 0.38, 0.15, 0.7), false, 1.0)
+	draw_string(serif, r.position + Vector2(16, 28), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(1.0, 0.75, 0.45))
+	for i in lines.size():
+		var y := r.position.y + 54 + i * 22
+		draw_string(font, Vector2(r.position.x + 16, y), lines[i][0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.92, 0.8))
+		draw_string(font, Vector2(r.position.x + 190, y), lines[i][1], HORIZONTAL_ALIGNMENT_LEFT, 390, 14, Color(1.0, 0.92, 0.8, 0.7))

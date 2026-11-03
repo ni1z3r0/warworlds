@@ -47,6 +47,7 @@ func _draw() -> void:
 	_bar(Rect2(110, h - 64, 196, 12), mode.hp / 100.0, Color(0.9, 0.3, 0.2))
 	var stance := "CROUCHED  (C)" if mode.crouched else ("SPRINTING" if mode.sprinting else "Standing  (C to crouch)")
 	draw_string(font, Vector2(34, h - 30), stance, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.7))
+	draw_string(font, Vector2(w - 200, h - 30), "F1  gunner's guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(CREAM, 0.6))
 
 	if mode.near_gun != null and mode.manning == null and not mode.ended:
 		draw_string_outline(font, Vector2(0, h * 0.62), "E  -  take the gun", HORIZONTAL_ALIGNMENT_CENTER, w, 20, 5, Color(0, 0, 0, 0.7))
@@ -63,6 +64,23 @@ func _draw() -> void:
 		draw_string(font, Vector2(24, my), m.text, HORIZONTAL_ALIGNMENT_LEFT, w * 0.3, 15, Color(CREAM, a))
 		my += 22.0
 
+	if mode.manning == null and not mode.ended:
+		_gun_markers()
+	if mode.show_help and not mode.ended:
+		_help([
+			["GOAL", "Bring the machine down. Free its captives."],
+			["1. Find a gun", "Follow the GUN markers (yellow diamonds)."],
+			["2. Take it", "Walk up to it and press E."],
+			["3. Aim", "Mouse moves the gun. Get ON TARGET."],
+			["4. Fire", "Click. Reload takes 4 s."],
+			["5. Survive", "If the eye fills, hide behind a building."],
+			["", ""],
+			["W A S D / Mouse", "move / look"],
+			["Shift / Space / C", "sprint / jump / crouch (harder to see)"],
+			["E", "take or leave a gun"],
+			["Esc  /  R  /  M", "pause / restart / main menu"],
+			["F1 or H", "show or hide this guide"],
+		], "GUNNER'S GUIDE")
 	if mode.paused and not mode.ended:
 		_overlay(w, h, "PAUSED", "WASD move  Shift sprint  C crouch  E take/leave gun  Click fire\nEsc resume     R restart     M main menu", AMBER)
 	elif mode.ended and mode.result == "lost":
@@ -70,6 +88,31 @@ func _draw() -> void:
 	elif mode.ended and mode.result == "won":
 		var freed: int = mode.machine.captives
 		_overlay(w, h, "THE MACHINE IS DOWN", "It was %s.\n%d people freed from its cage.\n\nR play again     M main menu" % [mode.death_cause, freed], GREEN)
+
+
+func _gun_markers() -> void:
+	var cam: Camera3D = mode.cam
+	for i in mode.guns.size():
+		var g: FieldGun3D = mode.guns[i]
+		var p: Vector3 = g.global_position + Vector3(0, 2.5, 0)
+		var d: float = p.distance_to(cam.global_position)
+		var s: Vector2
+		var behind := cam.is_position_behind(p)
+		if behind:
+			# point at the screen edge in the gun's direction
+			var local := cam.global_transform.affine_inverse() * p
+			s = size * 0.5 + Vector2(-local.x, 0).normalized() * size.x * 0.45
+			s.y = size.y * 0.75
+		else:
+			s = cam.unproject_position(p)
+			s = s.clamp(Vector2(40, 140), size - Vector2(40, 120))
+		var col := Color(1, 0.85, 0.3, 0.95 if d < 4.5 else 0.8)
+		var dm := PackedVector2Array([s + Vector2(0, -9), s + Vector2(9, 0), s + Vector2(0, 9), s + Vector2(-9, 0)])
+		draw_colored_polygon(dm, Color(col, 0.35))
+		dm.append(dm[0])
+		draw_polyline(dm, col, 2.0)
+		draw_string_outline(font, s + Vector2(-60, -16), "GUN %d  %d m" % [i + 1, int(d)], HORIZONTAL_ALIGNMENT_CENTER, 120, 13, 4, Color(0, 0, 0, 0.8))
+		draw_string(font, s + Vector2(-60, -16), "GUN %d  %d m" % [i + 1, int(d)], HORIZONTAL_ALIGNMENT_CENTER, 120, 13, col)
 
 
 func _gun_sight(c: Vector2, w: float, h: float) -> void:
@@ -154,3 +197,16 @@ func _overlay(w: float, h: float, head: String, sub: String, c: Color) -> void:
 	var lines := sub.split("\n")
 	for i in lines.size():
 		draw_string(font, Vector2(0, h * 0.42 + 50 + i * 24), lines[i], HORIZONTAL_ALIGNMENT_CENTER, w, 17, CREAM)
+
+
+func _help(lines: Array, title: String) -> void:
+	var w := 590.0
+	var h := 50.0 + lines.size() * 22.0
+	var r := Rect2(24, size.y * 0.5 - h * 0.5, w, h)
+	draw_rect(r, Color(0.05, 0.02, 0.02, 0.82))
+	draw_rect(r, Color(0.8, 0.38, 0.15, 0.7), false, 1.0)
+	draw_string(serif, r.position + Vector2(16, 28), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color(1.0, 0.75, 0.45))
+	for i in lines.size():
+		var y := r.position.y + 54 + i * 22
+		draw_string(font, Vector2(r.position.x + 16, y), lines[i][0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(1.0, 0.92, 0.8))
+		draw_string(font, Vector2(r.position.x + 190, y), lines[i][1], HORIZONTAL_ALIGNMENT_LEFT, 390, 14, Color(1.0, 0.92, 0.8, 0.7))

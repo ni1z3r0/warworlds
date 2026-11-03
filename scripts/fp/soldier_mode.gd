@@ -70,6 +70,7 @@ var ended := false
 var result := ""
 var why := ""
 var paused := false
+var show_help := true   # controls panel; F1 or H toggles
 var _sick_warned := false
 var _flicker_msg_t := -99.0
 
@@ -665,6 +666,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if paused else Input.MOUSE_MODE_CAPTURED
 			KEY_R:
 				get_tree().reload_current_scene()
+			KEY_F1, KEY_H:
+				show_help = not show_help
 			KEY_M:
 				get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
