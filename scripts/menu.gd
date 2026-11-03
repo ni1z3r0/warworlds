@@ -4,6 +4,7 @@ extends Control
 ## silhouetted against the fire. All drawn procedurally.
 
 const MODES := [
+	["THE STORY", "The campaign in Alvim Corrêa's 1906 illustrations. Read, then play.", "res://scenes/campaign.tscn"],
 	["CHAPTER I  -  HORSELL COMMON", "Strategy: command a gun crew and three survivors from above.", "res://scenes/main.tscn"],
 	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
 	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
@@ -139,11 +140,11 @@ func _draw() -> void:
 		draw_rect(r, Color(1, 0.6, 0.25, 0.95 if on else 0.45), false, 2.0 if on else 1.0)
 		draw_string(serif, r.position + Vector2(18, 34), "%d   %s" % [i + 1, MODES[i][0]], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 0.85, 0.55) if on else cream)
 		draw_string(font, r.position + Vector2(46, 60), MODES[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(cream, 0.75))
-	draw_string(font, Vector2(0, 985), "Click a mode or press 1, 2 or 3", HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
+	draw_string(font, Vector2(0, 985), "Click a mode or press 1, 2, 3 or 4", HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
 
 
 func _option_rect(i: int) -> Rect2:
-	return Rect2(1000, 560 + i * 88, 560, 76)
+	return Rect2(1000, 500 + i * 84, 560, 74)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -165,6 +166,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_go(1)
 			KEY_3:
 				_go(2)
+			KEY_4:
+				_go(3)
 
 
 func _go(i: int) -> void:

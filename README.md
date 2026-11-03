@@ -8,9 +8,27 @@ A game based on H. G. Wells' *The War of the Worlds* (1898). Built in **Godot 4.
 
 1. Install [Godot 4.3](https://godotengine.org/download) (the standard build, not .NET).
 2. Open Godot, click **Import**, and select `project.godot`.
-3. Press **F5**. The main menu offers three modes.
+3. Press **F5**. The main menu offers the story and three modes.
 
 In every mode, **R** restarts and **M** returns to the menu.
+
+## The story: Alvim Corrêa's 1906 illustrations
+
+![The story](docs/screenshots/story.png)
+
+Choose **THE STORY** on the main menu. The campaign is told through Henrique Alvim Corrêa's 31 plates for the 1906 Belgian edition of the novel. They're public domain worldwide; see `art/correa/CREDITS.md`. Each chapter is a run of plates with narration, and text in quotation marks is Wells' own. Read a chapter, then press **Play** if it's built:
+
+| Chapter | Playable as |
+|---|---|
+| Prologue: The Eve of the War | story only |
+| I. Horsell Common | Strategy |
+| II. The Storm | coming soon |
+| III. The Guns at Shepperton | First person: the gunner |
+| Interlude: The Martian | First person: the fighting-machine |
+| IV. The Exodus, V. The *Thunder Child* | coming soon |
+| VI. The Ruined House, VII. The Red Weed, VIII. Dead London | coming soon |
+
+Controls: arrow keys or click to turn plates, Enter to play, Esc for the menu.
 
 ## The fighting-machine and its cage
 
@@ -90,6 +108,8 @@ The mood is a 1970s painted prog-rock album cover: blood-red skies, burning oran
 
 ```
 scenes/menu.tscn            main menu (start scene)
+scenes/campaign.tscn        the story: Corrêa plates and chapter select (scripts/campaign.gd, scripts/story.gd)
+art/correa/                 the 1906 plates (public domain) and CREDITS.md
 scenes/main.tscn            Chapter I (strategy)
 scenes/pilot.tscn           The Fighting-Machine (first person)
 scenes/soldier.tscn         The Artillery (first person)
