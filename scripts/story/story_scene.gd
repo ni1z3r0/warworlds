@@ -40,6 +40,10 @@ var scope_flash := 0.0
 var scope_seen := false
 var scope_note := ""
 var time := 0.0
+var canvas_mod: CanvasModulate
+var base_light := Color(1, 1, 1)
+var next_flash := 4.0
+var pre_flash := 0.0
 
 var autotest := false
 var transcript: Array[String] = []
@@ -59,15 +63,21 @@ func _ready() -> void:
 			for v in a.substr(13).split(","):
 				_shot_times.append(float(v))
 	if id == "":
-		id = Progress.story_id()
+		id = CampaignState.story_id()
 	data = load("res://scripts/story/chapters/%s.gd" % id).data()
 
 	var cm := CanvasModulate.new()
-	cm.color = data.get("light", Color(1, 1, 1))
+	base_light = data.get("light", Color(1, 1, 1))
+	cm.color = base_light
 	add_child(cm)
+	canvas_mod = cm
 	world = StoryWorld.new()
 	world.setup(data)
 	add_child(world)
+	for m in data.get("machines", []):
+		var md: Dictionary = (m as Dictionary).duplicate(true)
+		md["i"] = 0
+		world.machines.append(md)
 	for l in data.get("lanterns", []):
 		var lt := _light(Color(1.0, 0.75, 0.4), 1.0, 2.5)
 		lt.position = l
@@ -146,6 +156,8 @@ func _process(delta: float) -> void:
 		_shoot(_shot_times.pop_front())
 	_move_npcs(delta)
 	_update_ray(delta)
+	_update_machines(delta)
+	_update_storm(delta)
 	if done or dead:
 		if autotest and done:
 			_finish_test()
@@ -248,6 +260,16 @@ func _run(a: Array) -> void:
 			ray["a"] = ray.get("start", ray.min)
 			ray["dir"] = 1.0
 			ray["on"] = true
+		"machine":
+			# ["machine", index, pos, speed]: send a machine somewhere (stops its patrol)
+			var m: Dictionary = world.machines[a[1]]
+			m["path"] = [a[2]]
+			m["i"] = 0
+			m["speed"] = float(a[3]) if a.size() > 3 else 60.0
+			m["loop"] = false
+		"storm_on":
+			data["storm"] = true
+			next_flash = 2.5
 		"checkpoint":
 			checkpoint = {"pos": player.position, "step": step_i}
 		"end":
@@ -365,6 +387,46 @@ func _update_ray(delta: float) -> void:
 			world.add_fire(player.position, 12.0)
 
 
+func _update_machines(delta: float) -> void:
+	for m in world.machines:
+		var path: Array = m.get("path", [])
+		if path.is_empty():
+			continue
+		var tgt: Vector2 = path[m.i]
+		var d: Vector2 = tgt - (m.pos as Vector2)
+		var step: float = m.get("speed", 40.0) * delta
+		if d.length() <= step:
+			m.pos = tgt
+			if m.get("loop", true):
+				m.i = (m.i + 1) % path.size()
+			elif m.i < path.size() - 1:
+				m.i += 1
+		else:
+			m.facing = d.normalized()
+			m.pos = (m.pos as Vector2) + d.normalized() * step
+
+
+## The thunderstorm: blinding flashes, and in each flash the machines can see
+## anyone out in the open. A flicker in the sky warns of the next one.
+func _update_storm(delta: float) -> void:
+	if not data.get("storm", false):
+		return
+	world.flash = maxf(0.0, world.flash - delta * 3.0)
+	next_flash -= delta
+	pre_flash = clampf(1.0 - next_flash / 0.9, 0.0, 1.0) if next_flash < 0.9 else 0.0
+	if next_flash <= 0.0:
+		next_flash = randf_range(3.2, 5.5)
+		world.flash = 1.0
+		if not dead and not done and not autotest and busy.is_empty():
+			for m in world.machines:
+				if (m.pos as Vector2).distance_to(player.position) < m.get("view", 380.0) and not world.in_cover(player.position):
+					dead = true
+					dead_why = "The lightning lit you up in the open, and the hood turned towards you."
+					break
+	var flick := pre_flash * 0.15 * absf(sin(time * 40.0))
+	canvas_mod.color = base_light.lerp(Color(0.95, 0.92, 1.0), clampf(world.flash + flick, 0.0, 1.0))
+
+
 func respawn() -> void:
 	dead = false
 	player.down = false
@@ -429,8 +491,8 @@ func nearest_interactable() -> Dictionary:
 
 
 func _complete() -> void:
-	if Progress.active:
-		Progress.complete()
+	if CampaignState.active:
+		CampaignState.complete()
 	else:
 		get_tree().change_scene_to_file("res://scenes/campaign.tscn")
 

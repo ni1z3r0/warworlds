@@ -12,6 +12,8 @@ var fires: Array[Dictionary] = []
 var puffs: Array[Dictionary] = []
 var martian_at := Vector2.INF
 var ray_from := Vector2.INF
+var machines: Array[Dictionary] = []   # fighting-machines walking the map
+var flash := 0.0                         # lightning, 0..1
 var ray_to := Vector2.ZERO
 var cylinder_open := false
 var font: Font
@@ -79,7 +81,14 @@ func in_area(p: Vector2, name: String) -> bool:
 
 func in_cover(p: Vector2) -> bool:
 	for pr in data.get("props", []):
-		if pr.kind == "hummock" and p.distance_to(pr.pos) < pr.get("r", 40.0) * 0.8:
+		if (pr.kind == "hummock" or pr.kind == "furze") and p.distance_to(pr.pos) < pr.get("r", 40.0) * 0.8:
+			return true
+		if pr.kind == "ditch" and (pr.rect as Rect2).has_point(p):
+			return true
+		if pr.kind == "pine" and p.distance_to(pr.pos) < pr.get("r", 22.0) + 14.0:
+			return true
+	for k in data.get("areas", {}).keys():
+		if String(k).begins_with("cover") and (data.areas[k] as Rect2).has_point(p):
 			return true
 	return false
 
@@ -128,6 +137,13 @@ func _draw() -> void:
 		draw_rect(w, ink, false, 2.0)
 	if martian_at != Vector2.INF:
 		_draw_martian(martian_at)
+	for m in machines:
+		_draw_machine(m)
+	if data.get("rain", false):
+		for k in 140:
+			var x := fmod(k * 137.0 + _t * 520.0, W + 200.0) - 100.0
+			var y := fmod(k * 71.0 + _t * 900.0, H + 100.0) - 50.0
+			draw_line(Vector2(x, y), Vector2(x - 10, y + 26), Color(0.75, 0.8, 0.95, 0.25 + 0.4 * flash), 1.0)
 	for a in data.get("labels", []):
 		draw_string(font, a[1], a[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.95, 0.85, 0.7, 0.45))
 
@@ -198,12 +214,74 @@ func _draw_prop(pr: Dictionary, ink: Color) -> void:
 			draw_circle(Vector2.ZERO, r, Color(0.55, 0.44, 0.28))
 			draw_circle(Vector2(-r * 0.2, -r * 0.2), r * 0.6, Color(0.62, 0.5, 0.33))
 			draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+		"stairs":
+			var rr: Rect2 = pr.rect
+			draw_rect(rr, Color(0.3, 0.2, 0.13))
+			for k in range(0, int(rr.size.y), 14):
+				draw_line(Vector2(rr.position.x, rr.position.y + k), Vector2(rr.end.x, rr.position.y + k), ink, 1.5)
+			draw_rect(rr, ink, false, 2.0)
+		"window":
+			draw_rect(Rect2(p - Vector2(6, 34), Vector2(12, 68)), Color(0.55, 0.65, 0.85, 0.8))
+			draw_rect(Rect2(p - Vector2(6, 34), Vector2(12, 68)), ink, false, 2.0)
+		"door":
+			draw_rect(Rect2(p - Vector2(8, 32), Vector2(16, 64)), Color(0.42, 0.26, 0.14))
+			draw_rect(Rect2(p - Vector2(8, 32), Vector2(16, 64)), ink, false, 2.0)
+		"rug":
+			draw_rect(pr.rect, Color(0.4, 0.15, 0.12, 0.7))
+		"body":
+			draw_line(p + Vector2(-14, -3), p + Vector2(12, 4), Color(0.06, 0.05, 0.06), 9.0)
+			draw_circle(p + Vector2(15, 5), 5, Color(0.6, 0.5, 0.42))
+		"horse":
+			draw_rect(Rect2(p - Vector2(30, 12), Vector2(60, 24)), Color(0.28, 0.17, 0.1))
+			draw_circle(p + Vector2(34, -6), 9, Color(0.28, 0.17, 0.1))
+			for k in 4:
+				draw_line(p + Vector2(-22 + k * 14, 10), p + Vector2(-26 + k * 14, 26), Color(0.2, 0.12, 0.07), 3.0)
+		"furze":
+			var r: float = pr.get("r", 34.0)
+			draw_circle(p + Vector2(4, 5), r, Color(0, 0, 0, 0.25))
+			draw_circle(p, r, Color(0.2, 0.22, 0.1))
+			for k in 10:
+				draw_circle(p + Vector2.from_angle(k * 0.63) * r * 0.6, 6, Color(0.55, 0.5, 0.15, 0.6))
+		"ditch":
+			draw_rect(pr.rect, Color(0.12, 0.1, 0.07))
+			draw_rect((pr.rect as Rect2).grow(-6), Color(0.18, 0.2, 0.25, 0.7))
+		"pool":
+			draw_circle(p, pr.get("r", 30.0), Color(0.2, 0.24, 0.32, 0.85))
 		"crate":
 			draw_rect(Rect2(p - Vector2(14, 14), Vector2(28, 28)), Color(0.4, 0.28, 0.15))
 		"cart":
 			draw_rect(Rect2(p - Vector2(24, 14), Vector2(48, 28)), Color(0.35, 0.22, 0.12))
 			draw_circle(p + Vector2(-18, 16), 7, ink)
 			draw_circle(p + Vector2(18, 16), 7, ink)
+
+
+## A fighting-machine seen from above, after Alvim Corrêa: hat, two eyes,
+## needle legs, the basket on its back.
+func _draw_machine(m: Dictionary) -> void:
+	var p: Vector2 = m.pos
+	var f: Vector2 = m.get("facing", Vector2.LEFT)
+	var ink := Color(0.05, 0.04, 0.04)
+	var hub := p + Vector2(0, -70)
+	for k in 3:
+		var a := f.angle() + PI / 3.0 + k * TAU / 3.0 + sin(_t * 3.0 + k) * 0.15
+		var foot := p + Vector2.from_angle(a) * 70.0
+		draw_line(foot, hub + Vector2(0, 30), ink, 4.0)
+	draw_circle(hub + Vector2(0, 30) - f * 46.0, 18, Color(0.85, 0.85, 0.8))      # the basket
+	draw_arc(hub + Vector2(0, 30) - f * 46.0, 18, 0, TAU, 20, ink, 2.0)
+	for k in 12:
+		var x := -34.0 + k * 6.0
+		draw_line(hub + Vector2(x, 6), hub + Vector2(x + sin(_t + k) * 3.0, 50), Color(0.1, 0.08, 0.07, 0.8), 1.0)
+	draw_set_transform(hub, 0, Vector2(1.0, 0.55))
+	draw_circle(Vector2.ZERO, 46, ink)
+	draw_circle(Vector2.ZERO, 43, Color(0.55, 0.52, 0.48))
+	draw_circle(Vector2.ZERO, 16, Color(0.65, 0.62, 0.56))
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	draw_line(hub, hub + Vector2(0, -24), ink, 2.0)
+	for side in [-1.0, 1.0]:
+		var e: Vector2 = hub + Vector2(0, 14) + f * 16.0 + f.orthogonal() * 9.0 * side
+		draw_circle(e, 6, ink)
+		draw_circle(e, 5, Color(0.95, 0.92, 0.85))
+		draw_circle(e + f * 2.0, 2.2, ink)
 
 
 func _draw_martian(p: Vector2) -> void:

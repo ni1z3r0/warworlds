@@ -107,18 +107,22 @@ const CHAPTERS := [
 	{
 		"title": "X. In the Storm",
 		"book": BOOK_ONE,
-		"cast": ["narrator"],
+		"cast": ["narrator", "landlord"],
+		"story": "b1_10",
+		"mode": "Story: through the storm, past the machines",
 		"plates": [
 			["plate_0067.jpg", "\"A monstrous tripod, higher than many houses, striding over the young pine trees, and smashing them aside in its career.\""],
-			["plate_0075.jpg", "Driving back alone through the thunderstorm, you meet the machines. Coming soon: escape through the storm."],
+			["plate_0075.jpg", "Driving the landlord's dog cart back alone through the thunderstorm, you meet the machines."],
 		],
 	},
 	{
 		"title": "XI. At the Window",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "artilleryman"],
+		"story": "b1_11",
+		"mode": "Story: the artilleryman's story",
 		"plates": [
-			["", "From your study window you watch Woking burn. At dawn a soldier climbs over your garden fence: the artilleryman, the last of his gun. Coming soon."],
+			["", "From your study window you watch Woking burn. Before dawn a soldier climbs over your garden fence: the artilleryman, the last of his gun."],
 		],
 	},
 	{

@@ -30,7 +30,7 @@ func _ready() -> void:
 	var sf := SystemFont.new()
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "serif"])
 	serif = sf
-	chapter = clampi(Progress.current, 0, Story.CHAPTERS.size() - 1)
+	chapter = clampi(CampaignState.get_current(), 0, Story.CHAPTERS.size() - 1)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--chapter="):
 			chapter = int(a.substr(10))
@@ -117,13 +117,13 @@ func _draw() -> void:
 			draw_rect(r, Color(0.25, 0.1, 0.05, 0.8))
 			draw_rect(r, Color(AMBER, 0.8), false, 1.5)
 		var playable := _playable(i)
-		var done := Progress.is_done(i)
+		var done := CampaignState.is_done(i)
 		draw_string(serif, r.position + Vector2(14, 17), c.title, HORIZONTAL_ALIGNMENT_LEFT, 440, 15, CREAM if on else Color(CREAM, 0.8))
 		var tag: String = c.get("mode", "Read") if playable else ("Read" if c.cast.is_empty() else "Read  (coming soon to play)")
 		draw_string(font, r.position + Vector2(14, 31), tag, HORIZONTAL_ALIGNMENT_LEFT, 440, 11, Color(0.6, 1.0, 0.6, 0.85) if playable else Color(DIM, 0.6))
 		if done:
 			draw_string(font, r.position + Vector2(470, 22), "done", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(0.6, 1.0, 0.6, 0.7))
-		elif i == Progress.current:
+		elif i == CampaignState.get_current():
 			draw_string(font, r.position + Vector2(425, 22), "you are here", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(AMBER, 0.9))
 		y += 38.0
 	y += 6.0
@@ -248,7 +248,7 @@ func _playable(i: int) -> bool:
 func _play() -> void:
 	if chapter == _cast_index() or not _playable(chapter):
 		return
-	Progress.play(chapter)
+	CampaignState.play(chapter)
 	return
 	var s: String = Story.CHAPTERS[chapter].scene
 	if s != "":

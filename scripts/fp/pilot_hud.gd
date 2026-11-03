@@ -113,7 +113,7 @@ func _draw() -> void:
 		_overlay(w, h, "PAUSED", "Esc resume     R restart     M main menu", AMBER)
 	if mode.ended:
 		if mode.result == "won":
-			_overlay(w, h, "THE GUNS ARE SILENT", "%d humans caged, %d houses burned.  But the air of this world burns in you...\n\n%s" % [mode.machine.captives, mode.houses_burned, "Enter continue the story     R play again     M main menu" if Progress.active else "R play again     M main menu"], GREEN)
+			_overlay(w, h, "THE GUNS ARE SILENT", "%d humans caged, %d houses burned.  But the air of this world burns in you...\n\n%s" % [mode.machine.captives, mode.houses_burned, "Enter continue the story     R play again     M main menu" if CampaignState.active else "R play again     M main menu"], GREEN)
 		else:
 			_overlay(w, h, "THE MACHINE FALLS", "You were %s.\n\nR try again     M main menu" % str(get_meta("why", "destroyed")), Color(1, 0.45, 0.3))
 

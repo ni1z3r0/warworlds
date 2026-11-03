@@ -584,8 +584,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif not ended:
 				paused = not paused
 		KEY_ENTER, KEY_KP_ENTER:
-			if ended and result == "won" and Progress.active:
-				Progress.complete()
+			if ended and result == "won" and CampaignState.active:
+				CampaignState.complete()
 		KEY_R:
 			get_tree().reload_current_scene()
 		KEY_M:

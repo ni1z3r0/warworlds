@@ -171,4 +171,4 @@ func _draw() -> void:
 			draw_string(font, er.position + Vector2(0, 132), "%d carried off in the machine's cage." % taken, HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 15, Color(1, 0.6, 0.4))
 		if not t.is_active():
 			draw_string(font, er.position + Vector2(0, 132), "The machine was %s." % t.death_cause, HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 15, Color(0.6, 1.0, 0.65))
-		draw_string(font, er.position + Vector2(0, 186), "Enter  continue the story      R  play again      M  main menu" if (won and Progress.active) else "R  play again        M  main menu", HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 14, Color(cream, 0.7))
+		draw_string(font, er.position + Vector2(0, 186), "Enter  continue the story      R  play again      M  main menu" if (won and CampaignState.active) else "R  play again        M  main menu", HORIZONTAL_ALIGNMENT_CENTER, er.size.x, 14, Color(cream, 0.7))

@@ -88,7 +88,7 @@ func _draw() -> void:
 		_overlay(w, h, "YOU ARE DEAD", "You were %s.\n\nR try again     M main menu" % mode.why, Color(1, 0.45, 0.3))
 	elif mode.ended and mode.result == "won":
 		var freed: int = mode.machine.captives
-		_overlay(w, h, "THE MACHINE IS DOWN", "It was %s.\n%d people freed from its cage.\n\n%s" % [mode.death_cause, freed, "Enter continue the story     R play again     M main menu" if Progress.active else "R play again     M main menu"], GREEN)
+		_overlay(w, h, "THE MACHINE IS DOWN", "It was %s.\n%d people freed from its cage.\n\n%s" % [mode.death_cause, freed, "Enter continue the story     R play again     M main menu" if CampaignState.active else "R play again     M main menu"], GREEN)
 
 
 func _gun_markers() -> void:

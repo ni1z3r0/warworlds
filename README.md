@@ -29,7 +29,8 @@ Choose **THE STORY** on the main menu. The game follows the novel's own chapters
 | VII. How I Reached Home | Story: nobody in Maybury believes you, then dinner with your wife |
 | VIII. Friday Night | Read |
 | IX. The Fighting Begins | Strategy: the dog cart road to Leatherhead |
-| X. In the Storm, XI. At the Window | Read (playable soon) |
+| X. In the Storm | Story: the third star falls, the dog cart crashes, then cross the storm. In each lightning flash, be in cover or be seen. |
+| XI. At the Window | Story: watch Woking burn, let the artilleryman in, and hear his story |
 | XII. The Destruction of Weybridge and Shepperton | First person: the artilleryman's gun |
 | Interlude: The Martian | First person: the fighting-machine |
 | XIII to XVII (the curate, London, the Exodus, the *Thunder Child*) | Read (playable soon) |
@@ -163,7 +164,7 @@ The mood is a 1970s painted prog-rock album cover: blood-red skies, burning oran
 scenes/menu.tscn            main menu (start scene)
 scenes/campaign.tscn        the storybook: chapter select (scripts/campaign.gd); chapters in scripts/story.gd
 scenes/story_scene.tscn     the walk-and-talk story engine (scripts/story/)
-scripts/progress.gd         autoload: campaign progress and save (user://campaign.json)
+scripts/campaign_state.gd   CampaignState: campaign progress and save (user://campaign.json); no autoload needed
 art/correa/                 the 1906 plates (public domain) and CREDITS.md
 art/portraits/              character portraits and CREDITS.md
 scripts/cast.gd             the characters: Wells' descriptions and lines
@@ -198,7 +199,7 @@ godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=a     # RTS
 godot --headless --fixed-fps 60 res://scenes/main.tscn -- --autotest=e     # RTS: capture into the cage, then rescue
 godot --headless --fixed-fps 60 res://scenes/pilot.tscn -- --autotest      # pilot mode
 godot --headless --fixed-fps 60 res://scenes/soldier.tscn -- --autotest    # soldier mode: a test gunner duels the machine
-godot --headless --fixed-fps 30 res://scenes/story_scene.tscn -- --story=b1_01 --autotest   # any story chapter (b1_01 ... b1_07)
+godot --headless --fixed-fps 30 res://scenes/story_scene.tscn -- --story=b1_01 --autotest   # any story chapter (b1_01 ... b1_11)
 godot --headless --fixed-fps 60 res://scenes/ruined_house.tscn -- --autotest=wells   # the house, as in the novel (also: --autotest, --autotest=caught)
 ```
 

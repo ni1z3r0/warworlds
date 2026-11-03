@@ -16,7 +16,7 @@ var _t := 0.0
 
 
 func _ready() -> void:
-	size = Vector2(World.W, World.H + 100)
+	set_deferred("size", Vector2(World.W, World.H + 100))
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	font = ThemeDB.fallback_font
 	var sf := SystemFont.new()

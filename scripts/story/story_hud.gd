@@ -59,6 +59,14 @@ func _draw() -> void:
 			draw_string(font, p - Vector2(160, 0), txt, HORIZONTAL_ALIGNMENT_CENTER, 320, 15, AMBER)
 	draw_string(font, Vector2(w - 330, h - 12), "WASD move   E talk / use / continue   M storybook", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(CREAM, 0.4))
 
+	if s.data.get("storm", false) and not s.dead and not s.done:
+		var cov: bool = s.world.in_cover(s.player.position)
+		var txt := "In cover" if cov else "IN THE OPEN"
+		var col := Color(0.6, 1.0, 0.6) if cov else Color(1, 0.6, 0.4)
+		if s.pre_flash > 0.0:
+			txt += "   -   the sky is flickering..."
+		draw_string_outline(font, Vector2(24, 112), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 5, Color(0, 0, 0, 0.8))
+		draw_string(font, Vector2(24, 112), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, col)
 	if s.ray.get("on", false) and not s.dead and not s.done:
 		var msg := "The heat-ray is sweeping the common! Hide behind the sand hummocks."
 		draw_string_outline(serif, Vector2(0, 130), msg, HORIZONTAL_ALIGNMENT_CENTER, w, 20, 6, Color(0, 0, 0, 0.8))
