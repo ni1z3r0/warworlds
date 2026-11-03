@@ -2,10 +2,12 @@ extends Node2D
 ## Mission controller for the prototype: "Chapter I - Horsell Common".
 ## Builds the scene, handles RTS input, resolves combat and win/lose.
 
+## Wells' own characters (see scripts/cast.gd). In the novel the narrator
+## borrows the landlord's dog cart and drives his wife to Leatherhead.
 const ROSTER := [
-	{"name": "Ellen Ashby", "role": "Schoolteacher", "speed": 46.0, "coat": Color(0.55, 0.22, 0.42)},
-	{"name": "Walter Hale", "role": "Telegraph clerk", "speed": 54.0, "coat": Color(0.25, 0.38, 0.55)},
-	{"name": "Joseph Marsh", "role": "Innkeeper, 61", "speed": 36.0, "coat": Color(0.55, 0.42, 0.20)},
+	{"id": "narrator", "name": "The Narrator", "role": "A writer of Woking", "speed": 50.0, "coat": Color(0.3, 0.3, 0.34)},
+	{"id": "wife", "name": "His Wife", "role": "Bound for Leatherhead", "speed": 46.0, "coat": Color(0.55, 0.22, 0.42)},
+	{"id": "landlord", "name": "The Landlord", "role": "Of the Spotted Dog", "speed": 36.0, "coat": Color(0.55, 0.42, 0.20)},
 ]
 
 var game: Node2D
@@ -49,12 +51,14 @@ func _ready() -> void:
 	game.add_child(world)
 
 	gun = FieldGun.new()
-	_setup_unit(gun, "Sgt. Tolliver's gun", "Royal Horse Artillery", 38.0, Vector2(330, 262))
+	_setup_unit(gun, "The Artilleryman", "Driver, Royal Artillery", 38.0, Vector2(330, 262))
+	gun.portrait_id = "artilleryman"
 	gun.facing = Vector2.DOWN
 	var starts := [Vector2(200, 165), Vector2(222, 182), Vector2(186, 184)]
 	for i in ROSTER.size():
 		var s := Survivor.new()
 		s.coat = ROSTER[i].coat
+		s.portrait_id = ROSTER[i].id
 		_setup_unit(s, ROSTER[i].name, ROSTER[i].role, ROSTER[i].speed, starts[i])
 
 	tripod = Tripod.new()
@@ -113,7 +117,8 @@ func start() -> void:
 	started = true
 	get_tree().paused = false
 	log_msg("A machine has risen from the pit on Horsell Common.")
-	log_msg("Get everyone across the river to the Leatherhead road.")
+	log_msg("The Landlord: \"I'm selling my bit of a pig.\"")
+	log_msg("Take the dog cart road to Leatherhead. Get everyone across the river.")
 
 
 # ---------------------------------------------------------------- loop
@@ -151,6 +156,15 @@ func _process(delta: float) -> void:
 				log_msg("The gun crew withdraws down the Leatherhead road.")
 			else:
 				log_msg("%s has escaped!" % u.display_name)
+	for u in units:
+		if u.alert > 0.6 and not u.barked and u.portrait_id != "":
+			u.barked = true
+			var line: String = Cast.PEOPLE[u.portrait_id].line
+			if line.length() > 60:
+				var parts := line.split(". ")
+				line = parts[0] + ". " + parts[1] + "." if parts.size() > 1 else line
+			if line != "":
+				log_msg("%s: \"%s\"" % [u.display_name, line])
 	_check_end()
 	if mission_time > 25.0 and not _help_auto_hidden:
 		_help_auto_hidden = true

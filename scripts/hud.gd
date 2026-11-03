@@ -94,9 +94,12 @@ func _draw() -> void:
 		if u.selected:
 			draw_rect(r, Color(1, 0.85, 0.45, 0.9), false, 2.0)
 		var dim := 1.0 if (u.alive and not u.escaped) else 0.45
-		_text(r.position + Vector2(10, 20), "[%d]" % (i + 1), 12, Color(amber, 0.7 * dim))
-		_text(r.position + Vector2(38, 20), u.display_name, 15, Color(cream, dim), serif)
-		_text(r.position + Vector2(38, 38), u.role, 11, Color(cream, 0.6 * dim))
+		var tx := 38.0
+		if u.portrait_id != "":
+			draw_texture_rect(Cast.portrait(u.portrait_id), Rect2(r.position + Vector2(4, 4), Vector2(48, 64)), false, Color(1, 1, 1, dim) if u.alive else Color(0.5, 0.3, 0.3, 0.7))
+			tx = 60.0
+		_text(r.position + Vector2(tx, 20), "[%d] %s" % [i + 1, u.display_name], 15, Color(cream, dim), serif)
+		_text(r.position + Vector2(tx, 38), u.role, 11, Color(cream, 0.6 * dim))
 		var sc := cream
 		var s := u.status_text()
 		if s.begins_with("LOST"):
@@ -105,7 +108,7 @@ func _draw() -> void:
 			sc = Color(0.6, 1.0, 0.6)
 		elif s.ends_with("!"):
 			sc = Color(1, 0.55, 0.3)
-		_text(r.position + Vector2(38, 58), s, 12, sc)
+		_text(r.position + Vector2(tx, 58), s, 12, sc)
 		if u.alive and not u.escaped and u.hp < 0.999:
 			_bar(Rect2(r.position.x + 190, r.position.y + 12, 66, 6), u.hp, Color(0.9, 0.3, 0.2))
 

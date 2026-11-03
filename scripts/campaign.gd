@@ -14,6 +14,7 @@ var _list_rects: Array[Rect2] = []
 var _prev_rect := Rect2()
 var _next_rect := Rect2()
 var _play_rect := Rect2()
+var _cast_rects: Array = []
 
 const INK := Color(0.07, 0.05, 0.04)
 const PAPER := Color(0.93, 0.88, 0.76)
@@ -43,8 +44,45 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+func _cast_index() -> int:
+	return Story.CHAPTERS.size()
+
+
 func _plates() -> Array:
+	if chapter == _cast_index():
+		return Cast.ORDER
 	return Story.CHAPTERS[chapter].plates
+
+
+func _draw_cast_page(w: float, h: float) -> void:
+	var id: String = Cast.ORDER[plate]
+	var p: Dictionary = Cast.PEOPLE[id]
+	var tex := Cast.portrait(id)
+	var box := Rect2(580, 40, 640, h - 80)
+	var ts := tex.get_size()
+	var k := minf(box.size.x / ts.x, box.size.y / ts.y)
+	var ps := ts * k
+	var pr := Rect2(box.position + (box.size - ps) * 0.5, ps)
+	draw_rect(pr.grow(10), Color(0, 0, 0, 0.5))
+	draw_texture_rect(tex, pr, false, Color(1, 1, 1, _fade))
+	var tx := 1250.0
+	draw_string(font, Vector2(tx, 70), "THE CAST", HORIZONTAL_ALIGNMENT_LEFT, 320, 11, Color(AMBER, 0.6))
+	draw_string(serif, Vector2(tx, 106), p.name, HORIZONTAL_ALIGNMENT_LEFT, 320, 26, AMBER)
+	var y := _wrap(p.role, Vector2(tx, 146), 320.0, 15, Color(CREAM, 0.8))
+	y = _wrap("\"" + p.desc + "\"", Vector2(tx, y + 24), 320.0, 17, Color(CREAM, _fade))
+	if p.line != "":
+		draw_string(font, Vector2(tx, y + 26), "SAYS", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(AMBER, 0.6))
+		y = _wrap("\"" + p.line + "\"", Vector2(tx, y + 50), 320.0, 17, Color(0.85, 1.0, 0.85, _fade))
+	draw_string(font, Vector2(tx, y + 30), "APPEARS IN", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(AMBER, 0.6))
+	_wrap(p.chapters, Vector2(tx, y + 52), 320.0, 14, Color(CREAM, 0.75))
+	draw_string(font, Vector2(tx, h - 210), "%d of %d" % [plate + 1, Cast.ORDER.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, DIM)
+	_prev_rect = Rect2(tx, h - 196, 150, 40)
+	_next_rect = Rect2(tx + 170, h - 196, 150, 40)
+	_button(_prev_rect, "<  previous", plate > 0)
+	_button(_next_rect, "next  >", plate < Cast.ORDER.size() - 1)
+	_play_rect = Rect2()
+	draw_string(font, Vector2(tx, h - 120), "Words in quotes are Wells' own.", HORIZONTAL_ALIGNMENT_LEFT, 330, 12, Color(DIM, 0.7))
+	draw_string(font, Vector2(tx, h - 100), "Portraits: AI-generated ink illustrations.", HORIZONTAL_ALIGNMENT_LEFT, 330, 12, Color(DIM, 0.7))
 
 
 func _texture(file: String) -> Texture2D:
@@ -82,6 +120,18 @@ func _draw() -> void:
 		var tag: String = c.get("mode", "") if playable else "coming soon"
 		draw_string(font, r.position + Vector2(14, 42), tag, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.6, 1.0, 0.6, 0.85) if playable else Color(DIM, 0.6))
 		y += 56.0
+	y += 10.0
+	var cr := Rect2(30, y, 500, 50)
+	_list_rects.append(cr)
+	var con := chapter == _cast_index()
+	if con:
+		draw_rect(cr, Color(0.25, 0.1, 0.05, 0.8))
+		draw_rect(cr, Color(AMBER, 0.8), false, 1.5)
+	draw_string(serif, cr.position + Vector2(14, 24), "THE CAST", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, CREAM if con else Color(CREAM, 0.8))
+	draw_string(font, cr.position + Vector2(14, 42), "Wells' characters, in his own words", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(AMBER, 0.7))
+	if con:
+		_draw_cast_page(w, h)
+		return
 
 	# the plate, mounted like a page
 	var plates := _plates()
@@ -101,11 +151,20 @@ func _draw() -> void:
 	draw_string(font, Vector2(tx, 70), c.book, HORIZONTAL_ALIGNMENT_LEFT, 320, 11, Color(AMBER, 0.6))
 	draw_string(serif, Vector2(tx, 104), c.title, HORIZONTAL_ALIGNMENT_LEFT, 320, 22, AMBER)
 	_wrap(entry[1], Vector2(tx, 150), 320.0, 18, Color(CREAM, _fade))
+	var people: Array = c.get("cast", [])
+	if not people.is_empty():
+		draw_string(font, Vector2(tx, h - 310), "IN THIS CHAPTER", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(AMBER, 0.6))
+		_cast_rects.clear()
+		for i in people.size():
+			var r := Rect2(tx + (i % 7) * 46, h - 300 + (i / 7) * 62, 42, 56)
+			draw_texture_rect(Cast.portrait(people[i]), r, false)
+			draw_rect(r, Color(AMBER, 0.5), false, 1.0)
+			_cast_rects.append([r, people[i]])
 	draw_string(font, Vector2(tx, h - 210), "Plate %d of %d" % [plate + 1, plates.size()], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, DIM)
 	_prev_rect = Rect2(tx, h - 196, 150, 40)
 	_next_rect = Rect2(tx + 170, h - 196, 150, 40)
 	_button(_prev_rect, "<  previous", plate > 0)
-	_button(_next_rect, "next  >", plate < plates.size() - 1 or chapter < Story.CHAPTERS.size() - 1)
+	_button(_next_rect, "next  >", plate < plates.size() - 1 or chapter < _cast_index())
 	_play_rect = Rect2(tx, h - 140, 320, 56)
 	if c.scene != "":
 		var pulse := 0.75 + 0.25 * sin(_t * 3.0)
@@ -124,7 +183,7 @@ func _button(r: Rect2, label: String, enabled: bool) -> void:
 	draw_string(font, r.position + Vector2(0, 26), label, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, 14, Color(CREAM, 1.0 if enabled else 0.3))
 
 
-func _wrap(text: String, pos: Vector2, width: float, fsize: int, col: Color) -> void:
+func _wrap(text: String, pos: Vector2, width: float, fsize: int, col: Color) -> float:
 	var words := text.split(" ")
 	var line := ""
 	var y := pos.y
@@ -138,11 +197,13 @@ func _wrap(text: String, pos: Vector2, width: float, fsize: int, col: Color) -> 
 			line = trial
 	if line != "":
 		draw_string(serif, Vector2(pos.x, y), line, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize, col)
+	return y
 
 
 func _go(ch: int, pl: int) -> void:
-	ch = clampi(ch, 0, Story.CHAPTERS.size() - 1)
-	pl = clampi(pl, 0, Story.CHAPTERS[ch].plates.size() - 1)
+	ch = clampi(ch, 0, _cast_index())
+	var n: int = Cast.ORDER.size() if ch == _cast_index() else Story.CHAPTERS[ch].plates.size()
+	pl = clampi(pl, 0, n - 1)
 	if ch != chapter or pl != plate:
 		_fade = 0.0
 	chapter = ch
@@ -152,7 +213,7 @@ func _go(ch: int, pl: int) -> void:
 func _next() -> void:
 	if plate < _plates().size() - 1:
 		_go(chapter, plate + 1)
-	elif chapter < Story.CHAPTERS.size() - 1:
+	elif chapter < _cast_index():
 		_go(chapter + 1, 0)
 
 
@@ -160,10 +221,12 @@ func _prev() -> void:
 	if plate > 0:
 		_go(chapter, plate - 1)
 	elif chapter > 0:
-		_go(chapter - 1, Story.CHAPTERS[chapter - 1].plates.size() - 1)
+		_go(chapter - 1, 999)
 
 
 func _play() -> void:
+	if chapter == _cast_index():
+		return
 	var s: String = Story.CHAPTERS[chapter].scene
 	if s != "":
 		get_tree().change_scene_to_file(s)
@@ -175,6 +238,10 @@ func _gui_input(event: InputEvent) -> void:
 		for i in _list_rects.size():
 			if _list_rects[i].has_point(p):
 				_go(i, 0)
+				return
+		for cr in _cast_rects:
+			if chapter != _cast_index() and (cr[0] as Rect2).has_point(p):
+				_go(_cast_index(), Cast.ORDER.find(cr[1]))
 				return
 		if _prev_rect.has_point(p):
 			_prev()

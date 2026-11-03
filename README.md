@@ -30,6 +30,22 @@ Choose **THE STORY** on the main menu. The campaign is told through Henrique Alv
 
 Controls: arrow keys or click to turn plates, Enter to play, Esc for the menu.
 
+## The cast: Wells' characters
+
+![The cast](docs/screenshots/cast.png)
+
+The game follows the novel's own people. Each character has an ink portrait drawn from Wells' description (AI-generated; see `art/portraits/CREDITS.md`), and their descriptions and spoken lines are Wells' words, defined in `scripts/cast.gd`.
+
+- **Storybook:** each chapter shows who appears in it (click a portrait), and **THE CAST** page has every character's portrait, description and line.
+- **Chapter I:** you escort **the Narrator, his Wife and the Landlord** of the Spotted Dog down the dog cart road to Leatherhead, as in the novel, covered by **the Artilleryman's** gun. Their portraits are on the unit cards, and each speaks their line the first time the machine nearly spots them.
+- **The Artillery:** you play **the Artilleryman**, who opens with his report from the novel: "Gun destroyed last night, sir. Have been hiding. Trying to rejoin battery, sir."
+
+Every quote in the game can be re-checked against the novel:
+
+```bash
+python3 tools/check_quotes.py
+```
+
 ## The fighting-machine and its cage
 
 ![The machine](docs/screenshots/machine.png)
@@ -114,6 +130,9 @@ The mood is a 1970s painted prog-rock album cover: blood-red skies, burning oran
 scenes/menu.tscn            main menu (start scene)
 scenes/campaign.tscn        the story: Corrêa plates and chapter select (scripts/campaign.gd, scripts/story.gd)
 art/correa/                 the 1906 plates (public domain) and CREDITS.md
+art/portraits/              character portraits and CREDITS.md
+scripts/cast.gd             the characters: Wells' descriptions and lines
+tools/check_quotes.py       checks every quote against the-war-of-the-worlds.txt
 scenes/main.tscn            Chapter I (strategy)
 scenes/pilot.tscn           The Fighting-Machine (first person)
 scenes/soldier.tscn         The Artillery (first person)

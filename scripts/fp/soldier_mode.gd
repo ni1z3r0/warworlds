@@ -142,8 +142,8 @@ func _ready() -> void:
 	layer.add_child(hud)
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	log_msg("Your battery is gone. Two people are in the machine's cage.")
-	log_msg("Find an abandoned gun. Bring the machine down.")
+	log_msg("You: \"Gun destroyed last night, sir. Have been hiding. Trying to rejoin battery, sir.\"")
+	log_msg("Two people are in the machine's cage. Find an abandoned gun. Bring it down.")
 	_parse_args()
 
 

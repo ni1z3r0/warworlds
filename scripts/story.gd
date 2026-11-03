@@ -15,6 +15,7 @@ const BOOK_TWO := "BOOK TWO  -  THE EARTH UNDER THE MARTIANS"
 const CHAPTERS := [
 	{
 		"title": "Prologue: The Eve of the War",
+		"cast": ["narrator", "ogilvy"],
 		"book": BOOK_ONE,
 		"scene": "",
 		"plates": [
@@ -25,6 +26,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "I. Horsell Common",
+		"cast": ["narrator", "wife", "ogilvy", "stent", "henderson", "landlord", "artilleryman"],
 		"book": BOOK_ONE,
 		"scene": "res://scenes/main.tscn",
 		"mode": "Strategy",
@@ -37,6 +39,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "II. The Storm",
+		"cast": ["narrator", "artilleryman"],
 		"book": BOOK_ONE,
 		"scene": "",
 		"plates": [
@@ -46,6 +49,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "III. The Guns at Shepperton",
+		"cast": ["artilleryman", "narrator"],
 		"book": BOOK_ONE,
 		"scene": "res://scenes/soldier.tscn",
 		"mode": "First person: the gunner",
@@ -58,6 +62,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "Interlude: The Martian",
+		"cast": ["martian"],
 		"book": BOOK_ONE,
 		"scene": "res://scenes/pilot.tscn",
 		"mode": "First person: the fighting-machine",
@@ -67,6 +72,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "IV. The Exodus",
+		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
 		"book": BOOK_ONE,
 		"scene": "",
 		"plates": [
@@ -75,6 +81,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "V. The Thunder Child",
+		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
 		"book": BOOK_ONE,
 		"scene": "",
 		"plates": [
@@ -84,6 +91,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VI. The Ruined House",
+		"cast": ["narrator", "curate", "martian"],
 		"book": BOOK_TWO,
 		"scene": "",
 		"plates": [
@@ -97,6 +105,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VII. The Red Weed",
+		"cast": ["narrator"],
 		"book": BOOK_TWO,
 		"scene": "",
 		"plates": [
@@ -106,6 +115,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VIII. Dead London",
+		"cast": ["narrator", "artilleryman", "wife"],
 		"book": BOOK_TWO,
 		"scene": "",
 		"plates": [

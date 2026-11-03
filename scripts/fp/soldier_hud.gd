@@ -42,11 +42,12 @@ func _draw() -> void:
 	_machine_panel(w)
 
 	# health and stance
-	_panel(Rect2(20, h - 78, 300, 58))
-	draw_string(serif, Vector2(34, h - 52), "GUNNER", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, AMBER)
-	_bar(Rect2(110, h - 64, 196, 12), mode.hp / 100.0, Color(0.9, 0.3, 0.2))
+	_panel(Rect2(20, h - 92, 330, 72))
+	draw_texture_rect(Cast.portrait("artilleryman"), Rect2(24, h - 88, 48, 64), false)
+	draw_string(serif, Vector2(82, h - 66), "THE ARTILLERYMAN", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, AMBER)
+	_bar(Rect2(82, h - 58, 250, 8), mode.hp / 100.0, Color(0.9, 0.3, 0.2))
 	var stance := "CROUCHED  (C)" if mode.crouched else ("SPRINTING" if mode.sprinting else "Standing  (C to crouch)")
-	draw_string(font, Vector2(34, h - 30), stance, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.7))
+	draw_string(font, Vector2(82, h - 40), stance, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.7))
 	draw_string(font, Vector2(w - 200, h - 30), "F1  gunner's guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(CREAM, 0.6))
 
 	if mode.near_gun != null and mode.manning == null and not mode.ended:
@@ -60,8 +61,8 @@ func _draw() -> void:
 		var a := clampf(1.0 - (mode.time - m.t - 7.0) / 3.0, 0.0, 1.0)
 		if a <= 0.0:
 			continue
-		draw_string_outline(font, Vector2(24, my), m.text, HORIZONTAL_ALIGNMENT_LEFT, w * 0.3, 15, 5, Color(0, 0, 0, 0.7 * a))
-		draw_string(font, Vector2(24, my), m.text, HORIZONTAL_ALIGNMENT_LEFT, w * 0.3, 15, Color(CREAM, a))
+		draw_string_outline(font, Vector2(24, my), m.text, HORIZONTAL_ALIGNMENT_LEFT, w * 0.5, 15, 5, Color(0, 0, 0, 0.7 * a))
+		draw_string(font, Vector2(24, my), m.text, HORIZONTAL_ALIGNMENT_LEFT, w * 0.5, 15, Color(CREAM, a))
 		my += 22.0
 
 	if mode.manning == null and not mode.ended:
