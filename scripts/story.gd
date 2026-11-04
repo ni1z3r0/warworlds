@@ -8,6 +8,7 @@ extends RefCounted
 ## "" shows a title page instead) and, if it is built, something to play:
 ##   "story": id   - a walk-and-talk story scene (scripts/story/chapters/<id>.gd)
 ##   "scene": path - one of the action modes
+## and "music": the Musopen recording that plays under it (audio/music/<id>.ogg).
 ## Text in "quotes" is H. G. Wells' own, checked word for word against
 ## the-war-of-the-worlds.txt by tools/check_quotes.py; the rest is ours.
 
@@ -18,6 +19,7 @@ const CHAPTERS := [
 	# ------------------------------------------------------------ BOOK ONE
 	{
 		"title": "I. The Eve of the War",
+		"music": "scottish_andante",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "ogilvy"],
 		"story": "b1_01",
@@ -29,6 +31,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "II. The Falling Star",
+		"music": "steppes",
 		"book": BOOK_ONE,
 		"cast": ["ogilvy", "henderson"],
 		"story": "b1_02",
@@ -39,6 +42,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "III. On Horsell Common",
+		"music": "american_lento",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "ogilvy", "stent", "henderson"],
 		"story": "b1_03",
@@ -49,6 +53,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "IV. The Cylinder Opens",
+		"music": "pathetique_adagio",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "stent", "martian"],
 		"story": "b1_04",
@@ -59,6 +64,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "V. The Heat-Ray",
+		"music": "coriolan",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "ogilvy", "stent", "henderson"],
 		"story": "b1_05",
@@ -69,6 +75,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VI. The Heat-Ray in the Chobham Road",
+		"music": "coriolan",
 		"book": BOOK_ONE,
 		"cast": [],
 		"plates": [
@@ -78,6 +85,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VII. How I Reached Home",
+		"music": "mozart_40",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "wife"],
 		"story": "b1_07",
@@ -88,6 +96,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VIII. Friday Night",
+		"music": "mozart_40",
 		"book": BOOK_ONE,
 		"cast": [],
 		"plates": [
@@ -96,6 +105,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "IX. The Fighting Begins",
+		"music": "egmont",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "wife", "landlord", "artilleryman"],
 		"scene": "res://scenes/main.tscn",
@@ -106,6 +116,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "X. In the Storm",
+		"music": "brahms_1",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "landlord"],
 		"story": "b1_10",
@@ -117,6 +128,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "XI. At the Window",
+		"music": "marcia_funebre",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "artilleryman"],
 		"story": "b1_11",
@@ -127,6 +139,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "XII. The Destruction of Weybridge and Shepperton",
+		"music": "pathetique_march",
 		"book": BOOK_ONE,
 		"cast": ["artilleryman", "narrator"],
 		"scene": "res://scenes/soldier.tscn",
@@ -140,6 +153,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "Interlude: The Martian",
+		"music": "mountain_king",
 		"book": BOOK_ONE,
 		"cast": ["martian"],
 		"scene": "res://scenes/pilot.tscn",
@@ -150,6 +164,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "XIII. How I Fell In with the Curate",
+		"music": "suk_meditation",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "curate"],
 		"plates": [
@@ -158,6 +173,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "XIV-XVI. In London; The Exodus",
+		"music": "mendelssohn_80",
 		"book": BOOK_ONE,
 		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
 		"plates": [
@@ -166,6 +182,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "XVII. The Thunder Child",
+		"music": "hebrides",
 		"book": BOOK_ONE,
 		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
 		"plates": [
@@ -176,6 +193,7 @@ const CHAPTERS := [
 	# ------------------------------------------------------------ BOOK TWO
 	{
 		"title": "I-VI. The Ruined House",
+		"music": "pathetique_finale",
 		"book": BOOK_TWO,
 		"cast": ["narrator", "curate", "martian"],
 		"scene": "res://scenes/ruined_house.tscn",
@@ -192,6 +210,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VII. The Man on Putney Hill",
+		"music": "brahms_4",
 		"book": BOOK_TWO,
 		"cast": ["narrator", "artilleryman"],
 		"plates": [
@@ -200,6 +219,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "VIII. Dead London",
+		"music": "aases_death",
 		"book": BOOK_TWO,
 		"cast": ["narrator"],
 		"plates": [
@@ -212,6 +232,7 @@ const CHAPTERS := [
 	},
 	{
 		"title": "IX-X. Wreckage; The Epilogue",
+		"music": "morning",
 		"book": BOOK_TWO,
 		"cast": ["narrator", "wife"],
 		"plates": [

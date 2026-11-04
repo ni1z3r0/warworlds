@@ -4,12 +4,13 @@ extends Control
 ## silhouetted against the fire. All drawn procedurally.
 
 const MODES := [
-	["THE STORY", "Play the novel from the beginning, chapter by chapter. Continues where you left off.", "res://scenes/campaign.tscn"],
+	["THE STORY", "Play the novel chapter by chapter. Continues where you left off.", "res://scenes/campaign.tscn"],
 	["THE FIGHTING BEGINS", "Strategy: escort the narrator, his wife and the landlord to Leatherhead.", "res://scenes/main.tscn"],
 	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
 	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
 ]
 var hover := -1
+var _drag := ""   # "music" or "sfx" while dragging a volume slider
 var serif: Font
 var font: Font
 var _t := 0.0
@@ -21,6 +22,13 @@ func _ready() -> void:
 	var sf := SystemFont.new()
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "Liberation Serif", "serif"])
 	serif = sf
+	Sound.music("tragic_overture")
+	Sound.loop("wind_loop", true, -18.0)
+	Sound.loop("fire_loop", true, -24.0)
+
+
+func _exit_tree() -> void:
+	Sound.stop_loops()
 
 
 func _process(delta: float) -> void:
@@ -169,6 +177,31 @@ func _draw() -> void:
 		draw_string(serif, r.position + Vector2(18, 34), "%d   %s" % [i + 1, MODES[i][0]], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 0.85, 0.55) if on else cream)
 		draw_string(font, r.position + Vector2(46, 60), MODES[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(cream, 0.75))
 	draw_string(font, Vector2(0, 985), "Click a mode or press 1, 2, 3 or 4", HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
+	_draw_slider("music", "MUSIC", Sound.music_volume, cream)
+	_draw_slider("sfx", "EFFECTS", Sound.sfx_volume, cream)
+	draw_string(font, Vector2(1000, 950), "Music: Czech National Symphony Orchestra, Musopen (public domain)", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(cream, 0.45))
+
+
+func _slider_rect(which: String) -> Rect2:
+	return Rect2(1110, 852 if which == "music" else 892, 300, 14)
+
+
+func _draw_slider(which: String, label: String, v: float, cream: Color) -> void:
+	var r := _slider_rect(which)
+	draw_string(font, Vector2(1000, r.position.y + 12), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(cream, 0.8))
+	draw_rect(r, Color(0.06, 0.02, 0.02, 0.8))
+	draw_rect(Rect2(r.position, Vector2(r.size.x * v, r.size.y)), Color(1, 0.6, 0.25, 0.8))
+	draw_rect(r, Color(1, 0.6, 0.25, 0.6), false, 1.0)
+	draw_string(font, Vector2(r.end.x + 12, r.position.y + 12), "%d%%" % int(round(v * 100.0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(cream, 0.7))
+
+
+func _set_slider(which: String, x: float) -> void:
+	var r := _slider_rect(which)
+	var v := clampf((x - r.position.x) / r.size.x, 0.0, 1.0)
+	if which == "music":
+		Sound.set_volumes(v, Sound.sfx_volume)
+	else:
+		Sound.set_volumes(Sound.music_volume, v)
 
 
 func _option_rect(i: int) -> Rect2:
@@ -177,12 +210,29 @@ func _option_rect(i: int) -> Rect2:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
+		if _drag != "":
+			_set_slider(_drag, event.position.x)
+			return
+		var was := hover
 		hover = -1
 		for i in MODES.size():
 			if _option_rect(i).has_point(event.position):
 				hover = i
-	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and hover >= 0:
-		_go(hover)
+		if hover != was and hover >= 0:
+			Sound.play("ui_click", -14.0, 0.0)
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if not event.pressed:
+			if _drag == "sfx":
+				Sound.play("gun_boom", -8.0)   # a sample at the new volume
+			_drag = ""
+			return
+		for which in ["music", "sfx"]:
+			if _slider_rect(which).grow(6.0).has_point(event.position):
+				_drag = which
+				_set_slider(which, event.position.x)
+				return
+		if hover >= 0:
+			_go(hover)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -199,6 +249,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _go(i: int) -> void:
+	Sound.play("ui_click", -4.0, 0.0)
 	get_tree().change_scene_to_file(MODES[i][2])
 
 
@@ -214,4 +265,4 @@ func _physics_process(_d: float) -> void:
 				hover = 1
 				await RenderingServer.frame_post_draw
 				get_viewport().get_texture().get_image().save_png(a.substr(8) + "/menu.png")
-				get_tree().quit()
+				Sound.quit_game()

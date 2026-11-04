@@ -24,6 +24,9 @@ static func data() -> Dictionary:
 		"labels": [["to Horsell", Vector2(160, 30)]],
 		"steps": [
 			{"when": {"auto": true}, "do": [
+				["sfx", "falling_star", -4.0],
+				["wait", 2.8],
+				["sfx", "impact", -6.0],
 				["narr", "\"Then came the night of the first falling star.\" At dawn Ogilvy, who saw it fall, goes out alone onto Horsell Common to find it. You are Ogilvy."],
 			]},
 			{"goal": "Find the fallen star, by the sand-pits to the east", "when": {"reach": "pit"}, "do": [
@@ -32,6 +35,7 @@ static func data() -> Dictionary:
 			]},
 			{"goal": "Examine the cylinder", "when": {"use": "cylinder"}, "do": [
 				["narr", "Ogilvy noticed \"that some of the grey clinker, the ashy incrustation that covered the meteorite, was falling off the circular edge of the end.\""],
+				["sfx", "cylinder_unscrew", -4.0],
 				["narr", "\"Something within the cylinder was unscrewing the top!\""],
 				["say", "ogilvy", ["Good heavens!", "There's a man in it—men in it! Half roasted to death! Trying to escape!"]],
 			]},

@@ -152,6 +152,30 @@ Your crews are dead. A fighting-machine stalks the village with two people alrea
 
 ---
 
+## Sound and music
+
+**Music:** every chapter has its own piece from the **Musopen Kickstarter recordings** by the Czech National Symphony Orchestra. Musopen released these recordings into the public domain. Some examples:
+
+- The observatory in Chapter I opens to Mendelssohn's misty *Scottish* Andante.
+- The cylinder opens to the dark first bars of Tchaikovsky's *Pathétique*.
+- The storm in Chapter X plays under the pounding timpani of Brahms' First.
+- The Ruined House plays under the *Pathétique*'s "Adagio lamentoso".
+- Dead London plays under "Åse's Death".
+- The epilogue plays under Grieg's "Morning".
+
+`audio/CREDITS.md` lists every piece and where it plays. `tools/fetch_music.py` downloads the recordings from archive.org and cuts the looping excerpts.
+
+**Sound effects:** `tools/gen_sfx.py` synthesises all of them from scratch with numpy, with no samples. They include:
+
+- the Martians' "Ulla" howl
+- the Heat-Ray's whine
+- the stride and clank of the machines
+- the cylinder unscrewing
+- field guns, shells, thunder, rain and crowds
+- a heartbeat when the tentacle comes close
+
+**Code:** `scripts/sound.gd` (`Sound.play`, `Sound.loop`, `Sound.music`) is a static class, so no autoload is needed. The main menu has **Music** and **Effects** volume sliders, which are saved to `user://settings.json`.
+
 ## Art direction
 
 The mood is a 1970s painted prog-rock album cover: blood-red skies, burning orange, sickly heat-ray green, black smoke, and silhouettes against fire.
@@ -164,6 +188,10 @@ The mood is a 1970s painted prog-rock album cover: blood-red skies, burning oran
 scenes/menu.tscn            main menu (start scene)
 scenes/campaign.tscn        the storybook: chapter select (scripts/campaign.gd); chapters in scripts/story.gd
 scenes/story_scene.tscn     the walk-and-talk story engine (scripts/story/)
+scripts/sound.gd            Sound: effects, ambience loops, music and volumes (+ sound_host.gd)
+audio/music/, audio/sfx/    Musopen recordings (public domain) and synthesised effects; see audio/CREDITS.md
+tools/gen_sfx.py            synthesises audio/sfx/*.ogg
+tools/fetch_music.py        downloads and cuts audio/music/*.ogg
 scripts/campaign_state.gd   CampaignState: campaign progress and save (user://campaign.json); no autoload needed
 art/correa/                 the 1906 plates (public domain) and CREDITS.md
 art/portraits/              character portraits and CREDITS.md
@@ -210,5 +238,5 @@ To save screenshots, add `--shots=/abs/path --shot-times=3,7` (this needs a disp
 1. **Map of England campaign:** choose routes from Woking to London between chapters. Named survivors carry over, and whether a gun crew lives or dies changes later chapters.
 2. **More chapters:** Weybridge and Shepperton, the black smoke over London, the *Thunder Child*, the red weed, and Primrose Hill. Each can be played in the mode that suits it.
 3. **Finale:** the sickness peaks and every shield fails at once.
-4. **Real art and audio:** a modelled fighting-machine, painted skies and an original score.
-5. **First-person polish:** a body and hands for the gunner, horses and limbers, more guns and crews, and sound cues for the machine.
+4. **Real art:** a modelled fighting-machine and painted skies. LibriVox's public-domain readings of the novel could voice the narration.
+5. **First-person polish:** a body and hands for the gunner, horses and limbers, and more guns and crews.

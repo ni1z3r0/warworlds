@@ -47,6 +47,7 @@ static func data() -> Dictionary:
 				["narr", "\"I saw that the driving clouds had been pierced as it were by a thread of green fire, suddenly lighting their confusion and falling into the field to my left. It was the third falling star!\""],
 				["plate", "plate_0067.jpg", "\"A monstrous tripod, higher than many houses, striding over the young pine trees, and smashing them aside in its career; a walking engine of glittering metal, striding now across the heather\""],
 				["narr", "\"At the sight of the second monster my nerve went altogether.\" The horse bolts, the dog cart heels over, and you are flung into a pool of water."],
+				["sfx", "horse", -4.0],
 				["machine", 1, Vector2(590, 330), 110.0],
 				["narr", "\"Behind the main body was a huge mass of white metal like a gigantic fisherman's basket, and puffs of green smoke squirted out from the joints of the limbs as the monster swept by me.\""],
 				["checkpoint"],

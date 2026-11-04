@@ -73,6 +73,8 @@ var paused := false
 var show_help := true   # controls panel; F1 or H toggles
 var _sick_warned := false
 var _flicker_msg_t := -99.0
+var _stride_t := 0.0
+var _step_t := 0.0
 
 var autotest := false
 var _steps: Array = []
@@ -142,9 +144,17 @@ func _ready() -> void:
 	layer.add_child(hud)
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Sound.music_for("res://scenes/soldier.tscn")
+	Sound.loop("wind_loop", true, -14.0)
+	Sound.loop("fire_loop", true, -20.0)
+	Sound.loop("distant_guns", true, -18.0)
 	log_msg("You: \"Gun destroyed last night, sir. Have been hiding. Trying to rejoin battery, sir.\"")
 	log_msg("Two people are in the machine's cage. Find an abandoned gun. Bring it down.")
 	_parse_args()
+
+
+func _exit_tree() -> void:
+	Sound.stop_loops()
 
 
 # ---------------------------------------------------------------- loop
@@ -161,6 +171,7 @@ func _process(delta: float) -> void:
 		if dying_t > 3.0 and state != S.DEAD:
 			state = S.DEAD
 			world.explosion(machine.body_pos(), Color(1, 0.6, 0.2), 10.0)
+			Sound.play("explosion", 0.0, 0.0)
 			world.add_fire(machine.body_pos(), 6.0, -1.0)
 	if ended:
 		return
@@ -194,6 +205,11 @@ func _physics_process(delta: float) -> void:
 	elif Input.is_key_pressed(KEY_SPACE) and not crouched:
 		player.velocity.y = 4.5
 	player.move_and_slide()
+	if dir != Vector3.ZERO and player.is_on_floor():
+		_step_t -= delta
+		if _step_t <= 0.0:
+			_step_t = 0.3 if sprinting else (0.7 if crouched else 0.45)
+			Sound.play_any("step_grass", 2, -14.0 if crouched else -8.0)
 	cam.position.y = lerpf(cam.position.y, 1.0 if crouched else 1.6, delta * 8.0)
 
 
@@ -242,6 +258,8 @@ func fire_gun() -> void:
 	g.reload = RELOAD
 	world.explosion(g.muzzle(), Color(1, 0.7, 0.3), 1.0)
 	hear(g.global_position)
+	Sound.play("gun_boom", 0.0)
+	Sound.play("gun_load", -10.0)
 
 
 func _simulate(from: Vector3, v: Vector3) -> PackedVector3Array:
@@ -322,6 +340,7 @@ func _machine(delta: float) -> void:
 		log_msg("The machine lurches. Something is wrong with it...")
 	if sickness > 0.35 and flicker <= 0.0 and randf() < sickness * 0.12 * delta:
 		flicker = randf_range(1.5, 3.5) * (0.5 + sickness)
+		Sound.play_far("shield_fail", _machine_dist(), -8.0)
 		if time - _flicker_msg_t > 15.0:
 			_flicker_msg_t = time
 			log_msg("Its shield is FLICKERING. Fire now!")
@@ -404,6 +423,12 @@ func _walk(p: Vector3, spd: float, delta: float) -> bool:
 	var diff := machine.turn_toward(d, 0.9 * delta)
 	if absf(diff) < 0.6:
 		machine.position += machine.forward() * spd * delta
+		_stride_t -= delta
+		if _stride_t <= 0.0:
+			_stride_t = 1.5
+			Sound.play_far("stride", _machine_dist(), 0.0, 8.0)
+			if Sound.chance(0.4):
+				Sound.play_far("hydraulics", _machine_dist(), -4.0, 8.0)
 	return false
 
 
@@ -451,6 +476,10 @@ func hear(p: Vector3) -> void:
 		last_known = p
 
 
+func _machine_dist() -> float:
+	return machine.global_position.distance_to(player.global_position)
+
+
 func _start_sweep() -> void:
 	sweep_cd = randf_range(12.0, 20.0)
 	var best := {}
@@ -475,6 +504,8 @@ func _fire_at(p: Vector3) -> void:
 	state = S.COOLDOWN
 	cooldown = 2.0
 	world.add_fire(Vector3(p.x, 0, p.z), 2.0, 12.0)
+	Sound.play_far("ray_fire", _machine_dist(), 0.0, 10.0)
+	Sound.play_far("ignite", p.distance_to(player.global_position), -2.0, 6.0)
 
 
 func _try_grab_civilian() -> void:
@@ -485,6 +516,8 @@ func _try_grab_civilian() -> void:
 			grab_target = p
 			grab_t = 0.0
 			state = S.GRAB
+			Sound.play_far("tentacle", _machine_dist(), 0.0, 8.0)
+			Sound.play_far("scream", p.global_position.distance_to(player.global_position), -4.0, 8.0)
 			return
 
 
@@ -522,6 +555,7 @@ func _end_search() -> void:
 		s.global_position = machine.lens_pos() + Vector3(0, -3, 0)
 		s.vel = Shell3D.launch_velocity(s.global_position, last_known, 1.6)
 		smoke_cd = 22.0
+		Sound.play_far("hydraulics", _machine_dist(), 0.0, 8.0)
 		log_msg("It fires a canister of BLACK SMOKE where it last saw you!")
 	state = S.PATROL
 
@@ -534,8 +568,12 @@ func _machine_down(why_: String) -> void:
 	machine.shield_strength = 0.0
 	if why_.contains("bacteria"):
 		log_msg("The machine shudders and sags... the Martian inside is dying!")
+		Sound.play("shield_fail", 0.0, 0.0)
+		Sound.play("ulla", 0.0, 0.0)
 	else:
 		log_msg("THE MACHINE IS DOWN! It has been %s!" % why_)
+		Sound.play("explosion", 0.0, 0.0)
+	Sound.play("sting_win", -6.0, 0.0)
 	if machine.captives > 0:
 		log_msg("%d people climb out of the broken cage." % machine.captives)
 	ended = true
@@ -562,9 +600,11 @@ func shell_hit(s: Shell3D, hit: Dictionary) -> void:
 		sm.position = Vector3(p.x, 0.5, p.z)
 		add_child(sm)
 		smokes.append(sm)
+		Sound.play_far("smoke_hiss", p.distance_to(player.global_position), 0.0, 8.0)
 		return
 	world.explosion(p, Color(1, 0.55, 0.2), 3.5)
 	var pd := p.distance_to(player.global_position + Vector3(0, 1, 0))
+	Sound.play_far("explosion", pd, 0.0, 10.0)
 	if pd < 9.0:
 		_damage((9.0 - pd) * 14.0, "killed by the blast of your own shell")
 	for c in people:
@@ -582,15 +622,18 @@ func _machine_hit() -> void:
 	if shield_up():
 		shield -= 50.0
 		machine.shield_flash = 1.0
+		Sound.play_far("shield_hit", _machine_dist(), 2.0, 10.0)
 		if shield <= 0.0:
 			shield = 0.0
 			shield_broken = 7.0
+			Sound.play_far("shield_fail", _machine_dist(), 2.0, 10.0)
 			log_msg("ITS SHIELD OVERLOADS! You have seconds. Fire again!")
 		else:
 			log_msg("The shell bursts against its shield.")
 	else:
 		hull -= 1
 		stagger = 1.8
+		Sound.play_far("hydraulics", _machine_dist(), 2.0, 10.0)
 		if hull > 0:
 			log_msg("DIRECT HIT ON THE HULL! (%d more)" % hull)
 		else:
@@ -631,6 +674,7 @@ func _kill_player(how: String) -> void:
 	result = "lost"
 	why = how
 	log_msg("You were %s." % how)
+	Sound.play("sting_death", 0.0, 0.0)
 	if autotest:
 		_finish_test()
 
@@ -739,10 +783,12 @@ func _run_test() -> void:
 
 
 func _finish_test() -> void:
+	if Sound.is_quitting():
+		return
 	print("--- soldier summary t=%.1f result=%s why=%s machine=%s hull=%d shield=%.0f sickness=%.2f captives=%d hp=%.0f" % [
 		time, result, why, status_text(), hull, shield, sickness, machine.captives, hp])
 	if _shot_dir == "":
-		get_tree().quit()
+		Sound.quit_game()
 
 
 func _shoot(t: float) -> void:

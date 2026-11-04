@@ -149,6 +149,7 @@ func _process(delta: float) -> void:
 		main.log_msg("The machine moves sluggishly. Something is wrong with it...")
 	if sickness > 0.35 and flicker <= 0.0 and randf() < sickness * 0.12 * delta:
 		flicker = randf_range(1.5, 3.5) * (0.5 + sickness)
+		Sound.play("shield_fail", -12.0, 0.1)
 		if _t - flicker_msg_t > 15.0:
 			flicker_msg_t = _t
 			main.log_msg("The machine's shield is FLICKERING. Fire now!")
@@ -350,15 +351,19 @@ func on_shell(pos: Vector2, gun: Unit) -> void:
 	if shield_up():
 		shield -= 50.0
 		shield_flash = 1.0
+		Sound.play("shield_hit", -2.0)
 		if shield <= 0.0:
 			shield = 0.0
 			shield_broken = 7.0
+			Sound.play("shield_fail", -2.0, 0.0)
 			main.log_msg("The shield OVERLOADS! It is exposed for a few seconds. Fire again!")
 		else:
 			main.log_msg("The shell bursts harmlessly against an invisible shield.")
 	else:
 		hull -= 1
 		stagger = 1.5
+		Sound.play("explosion", -2.0)
+		Sound.play("hydraulics", -4.0)
 		if hull > 0:
 			main.log_msg("DIRECT HIT! The machine reels. (%d more to bring it down)" % hull)
 		else:
@@ -405,6 +410,9 @@ func _update_legs(delta: float) -> void:
 		if step_t >= 1.0:
 			lift[step_i] = 0.0
 			step_i = -1
+			Sound.play("stride", -14.0, 0.1)
+			if Sound.chance(0.25):
+				Sound.play("hydraulics", -18.0, 0.15)
 		return
 	var worst := -1
 	var wd := 34.0

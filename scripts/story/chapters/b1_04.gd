@@ -40,6 +40,8 @@ static func data() -> Dictionary:
 				["move", "boy", Vector2(700, 960), 90.0],
 			]},
 			{"goal": "Watch the cylinder", "when": {"after": 1.5}, "do": [
+				["sfx", "cylinder_unscrew"],
+				["wait", 4.0],
 				["open_cylinder"],
 				["narr", "\"the lid of the cylinder fell upon the gravel with a ringing concussion.\" \"I think everyone expected to see a man emerge\""],
 				["martian", Vector2(990, 430)],

@@ -51,6 +51,25 @@ var _shot_dir := ""
 var _shot_times: Array = []
 
 
+## Background sound for each chapter: [loop name, volume dB]. A chapter's
+## data can override this with an "ambience" list of its own.
+const AMBIENCE := {
+	"b1_01": [["night_loop", -6.0]],
+	"b1_02": [["wind_loop", -14.0], ["night_loop", -16.0]],
+	"b1_03": [["crowd_loop", -8.0], ["wind_loop", -18.0]],
+	"b1_04": [["crowd_loop", -6.0], ["wind_loop", -18.0]],
+	"b1_05": [["wind_loop", -12.0], ["fire_loop", -20.0]],
+	"b1_07": [["night_loop", -10.0], ["fire_loop", -16.0]],
+	"b1_10": [["rain_loop", -4.0], ["wind_loop", -8.0]],
+	"b1_11": [["fire_loop", -20.0], ["night_loop", -16.0]],
+}
+const STEPS := {"floor": "step_floor", "round_room": "step_floor", "town": "step_gravel", "heath": "step_grass"}
+
+var _step_t := 0.0
+var _tick_t := 0.0
+var _stride_t := {}
+
+
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--story="):
@@ -107,6 +126,13 @@ func _ready() -> void:
 	hud = load("res://scripts/story/story_hud.gd").new()
 	hud.scene = self
 	layer.add_child(hud)
+	Sound.music_for(id)
+	for amb in data.get("ambience", AMBIENCE.get(id, [])):
+		Sound.loop(amb[0], true, float(amb[1]))
+
+
+func _exit_tree() -> void:
+	Sound.stop_loops()
 
 
 func _person(pid: String, label: String, pos: Vector2, coat: Color) -> HousePerson:
@@ -173,6 +199,10 @@ func _process(delta: float) -> void:
 					busy = {}
 			"scope":
 				scope_t += delta
+				_tick_t -= delta
+				if _tick_t <= 0.0:
+					_tick_t = 1.0
+					Sound.play("clock_tick", -6.0, 0.0)
 		if not busy.is_empty() and busy.kind != "wait":
 			return
 	if busy.is_empty() and not queue.is_empty():
@@ -221,6 +251,7 @@ func _run(a: Array) -> void:
 			_log("~ " + a[1])
 		"plate":
 			busy = {"kind": "plate", "file": a[1], "text": a[2]}
+			Sound.play("page_turn", -6.0)
 			_log("[plate %s] %s" % [a[1], a[2]])
 		"scope":
 			busy = {"kind": "scope"}
@@ -242,24 +273,42 @@ func _run(a: Array) -> void:
 				p.coat = Color(0.05, 0.04, 0.04)
 				npc_goal.erase(a[1])
 				world.add_fire(p.position, 10.0)
+				Sound.play("ignite", -2.0, 0.15)
+				if Sound.chance(0.6):
+					Sound.play("scream", -10.0, 0.2)
 		"fire":
 			world.add_fire(a[1], float(a[2]))
+			Sound.play("ignite", -4.0, 0.15)
+		"sfx":
+			# ["sfx", name, volume dB]: a one-off sound effect
+			Sound.play(a[1], float(a[2]) if a.size() > 2 else 0.0)
+		"loop":
+			# ["loop", name, on, volume dB]: start or stop an ambience
+			Sound.loop(a[1], a[2], float(a[3]) if a.size() > 3 else 0.0)
 		"puffs":
+			Sound.play("smoke_hiss", -4.0)
 			for k in 3:
 				world.puffs.append({"p": a[1] + Vector2(k * 14 - 14, 0), "t": -k * 0.4})
 		"panic":
 			for c in crowd:
 				var away: Vector2 = c.position - data.get("panic_from", Vector2(800, 450))
 				crowd_goal[c] = c.position + away.normalized() * 900.0
+			Sound.loop("crowd_loop", false)
+			Sound.loop("panic_loop", true, -4.0)
+			Sound.play("scream", -6.0)
 		"martian":
 			world.martian_at = a[1]
+			Sound.play("tentacle", -6.0)
 		"open_cylinder":
 			world.cylinder_open = true
+			Sound.play("cylinder_open")
 		"ray":
 			ray = (a[1] as Dictionary).duplicate()
 			ray["a"] = ray.get("start", ray.min)
 			ray["dir"] = 1.0
 			ray["on"] = true
+			Sound.play("ray_fire")
+			Sound.loop("ray_hum", true, -8.0)
 		"machine":
 			# ["machine", index, pos, speed]: send a machine somewhere (stops its patrol)
 			var m: Dictionary = world.machines[a[1]]
@@ -269,11 +318,14 @@ func _run(a: Array) -> void:
 			m["loop"] = false
 		"storm_on":
 			data["storm"] = true
+			Sound.loop("rain_loop", true, -4.0)
 			next_flash = 2.5
 		"checkpoint":
 			checkpoint = {"pos": player.position, "step": step_i}
 		"end":
 			done = true
+			Sound.loop("ray_hum", false)
+			Sound.play("sting_win", -8.0)
 			ray = {}
 			world.ray_from = Vector2.INF
 			_log("== chapter complete")
@@ -317,9 +369,14 @@ func _move_player(delta: float) -> void:
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): v.x += 1
 	player.moving = v != Vector2.ZERO
 	if v == Vector2.ZERO:
+		_step_t = 0.0
 		return
 	v = v.normalized()
 	var spd := 170.0 if Input.is_key_pressed(KEY_SHIFT) else 110.0
+	_step_t -= delta
+	if _step_t <= 0.0:
+		_step_t = 0.27 if spd > 120.0 else 0.38
+		Sound.play_any(STEPS.get(data.get("ground", "heath"), "step_grass"), 2, -10.0)
 	var step := v * spd * delta
 	var q := player.position + Vector2(step.x, 0)
 	if not world.solid(q, 10.0):
@@ -381,10 +438,10 @@ func _update_ray(delta: float) -> void:
 	if along > 0.0 and along < ray.len:
 		var off := absf(to_p.cross(dir))
 		if off < 16.0 and not world.in_cover(player.position):
-			dead = true
-			dead_why = "It was as if you were suddenly and momentarily turned to fire."
+			_die("It was as if you were suddenly and momentarily turned to fire.")
 			player.down = true
 			world.add_fire(player.position, 12.0)
+			Sound.play("ignite")
 
 
 func _update_machines(delta: float) -> void:
@@ -395,6 +452,14 @@ func _update_machines(delta: float) -> void:
 		var tgt: Vector2 = path[m.i]
 		var d: Vector2 = tgt - (m.pos as Vector2)
 		var step: float = m.get("speed", 40.0) * delta
+		if d.length() > step:
+			# a stride every so often, louder the closer the machine is
+			var k := world.machines.find(m)
+			_stride_t[k] = float(_stride_t.get(k, Sound.rand(0.0, 1.0))) - delta
+			if _stride_t[k] <= 0.0:
+				_stride_t[k] = clampf(90.0 / maxf(m.get("speed", 40.0), 1.0), 0.7, 2.2)
+				var dist := (m.pos as Vector2).distance_to(player.position)
+				Sound.play("stride", clampf(-dist / 60.0, -24.0, 0.0), 0.08)
 		if d.length() <= step:
 			m.pos = tgt
 			if m.get("loop", true):
@@ -417,14 +482,20 @@ func _update_storm(delta: float) -> void:
 	if next_flash <= 0.0:
 		next_flash = randf_range(3.2, 5.5)
 		world.flash = 1.0
+		Sound.play_any("thunder", 2, 0.0)
 		if not dead and not done and not autotest and busy.is_empty():
 			for m in world.machines:
 				if (m.pos as Vector2).distance_to(player.position) < m.get("view", 380.0) and not world.in_cover(player.position):
-					dead = true
-					dead_why = "The lightning lit you up in the open, and the hood turned towards you."
+					_die("The lightning lit you up in the open, and the hood turned towards you.")
 					break
 	var flick := pre_flash * 0.15 * absf(sin(time * 40.0))
 	canvas_mod.color = base_light.lerp(Color(0.95, 0.92, 1.0), clampf(world.flash + flick, 0.0, 1.0))
+
+
+func _die(why: String) -> void:
+	dead = true
+	dead_why = why
+	Sound.play("sting_death", -2.0, 0.0)
 
 
 func respawn() -> void:
@@ -527,9 +598,11 @@ func _autoplay(delta: float) -> void:
 
 
 func _finish_test() -> void:
+	if Sound.is_quitting():
+		return
 	print("--- story %s complete: %d lines, %d steps" % [id, transcript.size(), steps().size()])
 	if _shot_dir == "":
-		get_tree().quit()
+		Sound.quit_game()
 
 
 func _shoot(t: float) -> void:

@@ -69,6 +69,10 @@ func _ready() -> void:
 	tripod.waypoints = [Vector2(420, 280), Vector2(250, 330), Vector2(560, 460),
 		Vector2(340, 600), Vector2(760, 640), Vector2(1150, 560), Vector2(1300, 380), Vector2(1240, 250)]
 	game.add_child(tripod)
+	Sound.music_for("res://scenes/main.tscn")
+	Sound.loop("wind_loop", true, -16.0)
+	Sound.loop("distant_guns", true, -16.0)
+	Sound.loop("fire_loop", true, -22.0)
 
 	# colour grade: painted, fire-lit, vignetted
 	var post_layer := CanvasLayer.new()
@@ -113,8 +117,13 @@ func _setup_unit(u: Unit, n: String, r: String, spd: float, pos: Vector2) -> voi
 	roster.append(u)
 
 
+func _exit_tree() -> void:
+	Sound.stop_loops()
+
+
 func start() -> void:
 	started = true
+	Sound.play("ulla", -6.0, 0.0)
 	get_tree().paused = false
 	log_msg("A machine has risen from the pit on Horsell Common.")
 	log_msg("The Landlord: \"I'm selling my bit of a pig.\"")
@@ -188,9 +197,11 @@ func _check_end() -> void:
 	if escaped + pending > 0:
 		result = "won"
 		log_msg("Chapter complete.")
+		Sound.play("sting_win", -4.0, 0.0)
 	else:
 		result = "lost"
 		log_msg("Everyone is lost.")
+		Sound.play("sting_death", -2.0, 0.0)
 	get_tree().paused = true
 	if autotest:
 		_finish_autotest()
@@ -209,6 +220,7 @@ func log_msg(text: String) -> void:
 func on_unit_died(u: Unit, why: String) -> void:
 	selected.erase(u)
 	log_msg("%s - %s." % [u.display_name, why])
+	Sound.play("scream", -6.0, 0.2)
 
 
 func capture(u: Unit) -> void:
@@ -221,6 +233,8 @@ func capture(u: Unit) -> void:
 	units.erase(u)
 	selected.erase(u)
 	log_msg("%s is thrown into the machine's cage!" % u.display_name)
+	Sound.play("tentacle", -4.0)
+	Sound.play("scream", -8.0, 0.2)
 
 
 func free_captives(pos: Vector2) -> void:
@@ -241,8 +255,11 @@ func on_tripod_down(why: String) -> void:
 	free_captives(tripod.position)
 	if why.contains("bacteria"):
 		log_msg("The machine shudders, its shield gone... the Martian inside is dying!")
+		Sound.play("shield_fail", 0.0, 0.0)
+		Sound.play("ulla", -2.0, 0.0)
 	else:
 		log_msg("THE MACHINE FALLS! It has been %s!" % why)
+		Sound.play("explosion", 0.0, 0.0)
 	_add_blast(tripod.position, Color(1, 0.6, 0.2), 90.0, 1.2)
 
 
@@ -259,17 +276,24 @@ func spawn_projectile(kind: String, from: Vector2, to: Vector2, source: Node2D) 
 	p.source = source
 	p.main = self
 	game.add_child(p)
+	if kind == "shell":
+		Sound.play("gun_boom", -2.0)
+		Sound.play("shell_whistle", -12.0)
+	else:
+		Sound.play("hydraulics", -6.0)
 
 
 func on_projectile_land(p: Projectile) -> void:
 	if p.kind == "shell":
 		_add_blast(p.to, Color(1, 0.55, 0.2), 34.0, 0.6)
+		Sound.play("explosion", -6.0, 0.12)
 		for u in units.duplicate():
 			if u.alive and not u.in_cellar and u.position.distance_to(p.to) < 26.0:
 				u.die("killed by our own shell")
 		if tripod.is_active():
 			tripod.on_shell(p.to, gun)
 	else:
+		Sound.play("smoke_hiss", -4.0)
 		var s := BlackSmoke.new()
 		s.position = p.to
 		game.add_child(s)
@@ -282,6 +306,8 @@ func heat_ray(from: Vector2, to: Vector2) -> void:
 			u.die("burned by the heat-ray")
 	world.add_fire(to, 16.0, 22.0)
 	_add_blast(to, Color(0.5, 1.0, 0.5), 30.0, 0.5)
+	Sound.play("ray_fire", -2.0)
+	Sound.play("ignite", -6.0, 0.15)
 
 
 func _add_blast(pos: Vector2, c: Color, size: float, life: float) -> void:
@@ -494,11 +520,13 @@ func _run_autotest() -> void:
 
 
 func _finish_autotest() -> void:
+	if Sound.is_quitting():
+		return
 	print("--- autotest summary at %.1fs: result=%s tripod=%s hull=%d shield=%.0f sickness=%.2f" % [
 		mission_time, result, tripod.status_text(), tripod.hull, tripod.shield, tripod.sickness])
 	for u in roster:
 		print("    %-22s %s" % [u.display_name, u.status_text()])
-	get_tree().quit()
+	Sound.quit_game()
 
 
 func _shoot(n: String) -> void:

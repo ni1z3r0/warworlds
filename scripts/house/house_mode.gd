@@ -45,6 +45,9 @@ var touched_once := false
 var calm_hold := 0.0
 var calms_today := 0
 var _step_t := 0.0
+var _foot_t := 0.0
+var _pit_t := 3.0
+var _tent_t := 0.0
 var noise_ring := 0.0
 
 # curate
@@ -119,6 +122,8 @@ func _ready() -> void:
 	hud.mode = self
 	layer.add_child(hud)
 
+	Sound.music_for("res://scenes/ruined_house.tscn")
+	Sound.loop("night_loop", true, -20.0)
 	log_msg("The fifth cylinder has fallen on the house. You are buried alive beside the Martians' pit.")
 	log_msg("Keep quiet, keep out of the green light, and keep the Curate from breaking.")
 	curate.say("We are safe here", 4.0)
@@ -146,10 +151,15 @@ func _light(c: Color, energy: float, scale_: float) -> PointLight2D:
 
 # ---------------------------------------------------------------- loop
 
+func _exit_tree() -> void:
+	Sound.stop_loops()
+
+
 func _process(delta: float) -> void:
 	if _shot_dir != "" and not _shot_times.is_empty() and time >= _shot_times[0]:
 		_shoot(_shot_times.pop_front())
 	beam_fx.queue_redraw()
+	_sounds(delta)
 	if paused or ended:
 		return
 	time += delta
@@ -180,17 +190,39 @@ func _day_event(d: int) -> void:
 			_shock(15.0)
 		6:
 			log_msg("Day 6. A second fighting-machine arrives. The light will sweep the house more often.")
+			Sound.play("stride", -6.0)
 		9:
 			log_msg("Day 9. They feed again. The Curate weeps in the dark.")
 			_shock(15.0)
 		14:
 			martians_gone = true
+			Sound.loop("night_loop", false)
+			Sound.loop("wind_loop", true, -16.0)
 			log_msg("Day 14. The red weed has grown right across the hole in the wall. The pit has gone quiet.")
 			hole_light.color = Color(1.0, 0.3, 0.2)
 			pit_light.color = Color(1.0, 0.3, 0.2)
 		15:
 			map.open_hole()
 			log_msg("Day 15. A dog's nose peers in through the red weed. The pit is empty. Climb out through the hole!")
+
+
+## The pit's machinery clanking beyond the wall, the tentacle's slither while
+## it gropes about, and your heart pounding when it gets close.
+func _sounds(delta: float) -> void:
+	if paused or ended:
+		Sound.loop("heartbeat", false)
+		return
+	_pit_t -= delta
+	if _pit_t <= 0.0 and not martians_gone:
+		_pit_t = Sound.rand(2.5, 6.0)
+		Sound.play(Sound.pick(["hydraulics", "stride", "tentacle"]), -20.0, 0.15)
+	if tentacle != null:
+		_tent_t -= delta
+		if _tent_t <= 0.0:
+			_tent_t = 2.0
+			Sound.play("tentacle", -4.0, 0.1)
+	var danger := tentacle != null or susp > 70.0 or seen_t > 0.0
+	Sound.loop("heartbeat", danger, -2.0 if tentacle != null else -8.0)
 
 
 func _shock(n: float) -> void:
@@ -226,6 +258,13 @@ func _move_narrator(delta: float) -> void:
 	narrator.position = map.slide(narrator.position, v * spd * delta, 10.0)
 	narrator.facing = v
 	narrator.moving = true
+	_foot_t -= delta
+	if _foot_t <= 0.0:
+		_foot_t = 0.3 if hurry else 0.5
+		if map.on_crockery(narrator.position):
+			Sound.play("crockery", -4.0 if hurry else -10.0, 0.15)
+		else:
+			Sound.play_any("step_floor", 2, -6.0 if hurry else -16.0)
 	_step_t -= delta
 	if _step_t <= 0.0:
 		if hurry:
@@ -319,6 +358,8 @@ func strike() -> void:
 	curate.speech_t = 0.0
 	c_path.clear()
 	make_noise(curate.position, 200.0, 10.0)
+	Sound.play("step_floor_1", 0.0, 0.0)
+	Sound.play("crockery", -8.0)
 	log_msg("\"With one last touch of humanity I turned the blade back and struck him with the butt.\"")
 
 
@@ -383,6 +424,7 @@ func _curate_ai(delta: float) -> void:
 				c_shout_i += 1
 				curate.shout = 1.0
 				make_noise(curate.position, 900.0, 40.0)
+				Sound.play("scream", -14.0, 0.25)
 			if curate.position.distance_to(map.hole) < 60.0:
 				_send_tentacle(curate.position, "The Curate's cries have brought them.")
 
@@ -455,6 +497,7 @@ func _martians(delta: float) -> void:
 			if gaze_t <= 0.0:
 				gaze = G.WARN
 				gaze_t = 1.6
+				Sound.play("hydraulics", -10.0)
 		G.WARN:
 			hole_light.energy = 0.6 + 0.5 * absf(sin(time * 12.0))
 			if gaze_t <= 0.0:
@@ -486,6 +529,7 @@ func _send_tentacle(target: Vector2, msg: String, spd: float = 95.0) -> void:
 	add_child(tentacle)
 	tentacle.start(map, target)
 	touched_once = false
+	_tent_t = 0.0
 	log_msg(msg)
 
 
@@ -512,6 +556,7 @@ func _tentacle(delta: float) -> void:
 		second_search_t = 7.0
 		second_search_pos = curate.position
 		log_msg("It has the Curate!")
+		Sound.play("scream", -2.0, 0.0)
 		return
 	if tip.distance_to(narrator.position) < 26.0:
 		if in_coal:
@@ -535,6 +580,7 @@ func _check_escape() -> void:
 		else:
 			ending = "You climb out alone into a red, silent world, as the narrator did. The Curate's body is gone with the Martians."
 		log_msg("You are out of the house.")
+		Sound.play("sting_win", -4.0, 0.0)
 		_end()
 
 
@@ -545,6 +591,7 @@ func _lose(why: String) -> void:
 	result = "lost"
 	ending = why
 	log_msg(why)
+	Sound.play("sting_death", 0.0, 0.0)
 	_end()
 
 
@@ -672,9 +719,11 @@ func _run_test() -> void:
 
 
 func _finish_test() -> void:
+	if Sound.is_quitting():
+		return
 	print("--- house summary t=%.1f day=%d result=%s curate=%s nerve=%.0f rations=%d ending=%s" % [time, day, result, C.keys()[cstate], nerve, rations, ending])
 	if _shot_dir == "":
-		get_tree().quit()
+		Sound.quit_game()
 
 
 func _shoot(t: float) -> void:

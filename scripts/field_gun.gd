@@ -34,6 +34,7 @@ func toggle_deploy() -> void:
 			gstate = G.DEPLOYING
 			timer = DEPLOY_TIME
 			main.log_msg("The crew unlimber the gun...")
+			Sound.play("gun_load", -6.0)
 		G.READY, G.RELOADING:
 			gstate = G.LIMBERING
 			timer = DEPLOY_TIME

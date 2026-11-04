@@ -31,6 +31,7 @@ func _ready() -> void:
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "serif"])
 	serif = sf
 	chapter = clampi(CampaignState.get_current(), 0, Story.CHAPTERS.size() - 1)
+	Sound.music("la_malinconia")
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--chapter="):
 			chapter = int(a.substr(10))
@@ -222,6 +223,7 @@ func _go(ch: int, pl: int) -> void:
 	pl = clampi(pl, 0, n - 1)
 	if ch != chapter or pl != plate:
 		_fade = 0.0
+		Sound.play("page_turn", -8.0)
 	chapter = ch
 	plate = pl
 
@@ -248,6 +250,7 @@ func _playable(i: int) -> bool:
 func _play() -> void:
 	if chapter == _cast_index() or not _playable(chapter):
 		return
+	Sound.play("ui_click", -4.0, 0.0)
 	CampaignState.play(chapter)
 
 
@@ -300,4 +303,4 @@ func _physics_process(_d: float) -> void:
 			if a.begins_with("--shots="):
 				await RenderingServer.frame_post_draw
 				get_viewport().get_texture().get_image().save_png("%s/story_%d_%d.png" % [a.substr(8), chapter, plate])
-				get_tree().quit()
+				Sound.quit_game()

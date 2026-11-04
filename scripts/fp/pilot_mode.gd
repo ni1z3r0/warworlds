@@ -39,6 +39,8 @@ var result := ""
 var paused := false
 var show_help := true   # controls panel; F1 or H toggles
 var _sick_msgs := 0
+var _stride_t := 0.0
+var _was_firing := false
 var _flicker_msg_t := -99.0
 
 var autotest := false
@@ -92,9 +94,17 @@ func _ready() -> void:
 	layer.add_child(hud)
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Sound.music_for("res://scenes/pilot.tscn")
+	Sound.loop("wind_loop", true, -10.0)
+	Sound.loop("panic_loop", true, -24.0)
+	Sound.play("ulla", -4.0, 0.0)
 	log_msg("You stand over Horsell Common. The humans have brought up guns.")
 	log_msg("Silence the five batteries. Their shells cannot pierce your shield... for long.")
 	_parse_args()
+
+
+func _exit_tree() -> void:
+	Sound.stop_loops()
 
 
 # ---------------------------------------------------------------- loop
@@ -134,6 +144,12 @@ func _move(delta: float) -> void:
 		dir.y = 0.0
 		machine.position += dir.normalized() * spd * delta
 		machine.position = machine.position.clamp(Vector3(-380, 0, -380), Vector3(380, 0, 380))
+		_stride_t -= delta
+		if _stride_t <= 0.0:
+			_stride_t = 0.75 if Input.is_key_pressed(KEY_SHIFT) else 1.0
+			Sound.play("stride", -6.0, 0.08)
+			if Sound.chance(0.35):
+				Sound.play("hydraulics", -10.0, 0.15)
 
 
 func _update_camera(delta: float) -> void:
@@ -167,6 +183,11 @@ func _heat_ray(delta: float) -> void:
 	if overheated and ray_energy > 40.0:
 		overheated = false
 	firing = want and not overheated and grab_t < 0.0
+	if firing != _was_firing:
+		_was_firing = firing
+		if firing:
+			Sound.play("ray_fire", -4.0)
+		Sound.loop("ray_hum", firing, -6.0)
 	if not firing:
 		ray_energy = minf(100.0, ray_energy + 14.0 * delta)
 		machine.beam_on = false
@@ -188,17 +209,21 @@ func _heat_ray(delta: float) -> void:
 			if g.heat > 0.6:
 				g.wreck()
 				world.explosion(g.global_position + Vector3(0, 1, 0), Color(1, 0.6, 0.2), 4.0)
+				Sound.play_far("explosion", _dist(g.global_position), 0.0, 12.0)
 				world.add_fire(g.global_position, 2.0, 30.0)
 				log_msg("A battery is blasted to scrap. (%d left)" % _guns_left())
 				_check_win()
 	for p in people:
 		if p.alive and _seg_dist(from, target, p.global_position + Vector3(0, 1, 0)) < 2.5:
 			p.burn()
+			if Sound.chance(0.5):
+				Sound.play_far("scream", _dist(p.global_position), -4.0, 12.0)
 	var h := world.house_near(target, 7.0)
 	if not h.is_empty() and not h.burning:
 		h.heat += delta
 		if h.heat > 1.0:
 			world.ignite(h)
+			Sound.play_far("ignite", _dist(target), 0.0, 12.0)
 			houses_burned += 1
 	if randf() < delta * 4.0:
 		world.add_fire(target, 1.5, 6.0)
@@ -250,6 +275,8 @@ func try_grab() -> void:
 		return
 	grab_target = best
 	grab_t = 0.0
+	Sound.play("tentacle", -2.0)
+	Sound.play_far("scream", _dist(best.global_position), -2.0, 8.0)
 
 
 func fire_smoke() -> void:
@@ -264,6 +291,7 @@ func fire_smoke() -> void:
 	s.global_position = machine.lens_pos() + Vector3(0, -2, 0)
 	s.vel = Shell3D.launch_velocity(s.global_position, target, 1.6)
 	smoke_cd = 14.0
+	Sound.play("hydraulics", -2.0)
 	log_msg("Black smoke canister away.")
 
 
@@ -309,6 +337,7 @@ func _batteries(delta: float) -> void:
 		g.barrel_pivot.rotation.x = clampf(asin(clampf(s.vel.normalized().y, -1, 1)), -0.1, 0.8)
 		g.flash()
 		g.reload = randf_range(5.0, 8.0)
+		Sound.play_far("gun_boom", d, 0.0, 25.0)
 
 
 func _vitals(delta: float) -> void:
@@ -326,6 +355,7 @@ func _vitals(delta: float) -> void:
 		log_msg("Your strength is failing. The shield is unstable.")
 	if sickness > 0.35 and flicker <= 0.0 and randf() < sickness * 0.1 * delta:
 		flicker = randf_range(1.5, 3.0) * (0.5 + sickness)
+		Sound.play("shield_fail", -10.0, 0.1)
 		if time - _flicker_msg_t > 15.0:
 			_flicker_msg_t = time
 			log_msg("YOUR SHIELD FLICKERS!")
@@ -356,7 +386,10 @@ func shell_hit(s: Shell3D, hit: Dictionary) -> void:
 		sm.position = Vector3(p.x, 0.5, p.z)
 		add_child(sm)
 		smokes.append(sm)
+		Sound.play_far("smoke_hiss", _dist(p), 0.0, 12.0)
 		return
+	if hit.what != machine:
+		Sound.play_far("explosion", _dist(p), -2.0, 12.0)
 	if hit.what == machine and shield_up():
 		world.explosion(p, Color(0.4, 1.0, 0.6), 1.2)
 	else:
@@ -367,12 +400,15 @@ func shell_hit(s: Shell3D, hit: Dictionary) -> void:
 		if shield_up():
 			shield -= 22.0
 			machine.shield_flash = 1.0
+			Sound.play("shield_hit", 0.0)
 			if shield <= 0.0:
 				shield = 0.0
 				shield_broken = 6.0
+				Sound.play("shield_fail", 0.0, 0.0)
 				log_msg("YOUR SHIELD HAS FAILED! Get clear of the guns!")
 		else:
 			hull -= 12.0
+			Sound.play("explosion", 0.0)
 			log_msg("A shell strikes your hull!")
 			if hull <= 0.0:
 				hull = 0.0
@@ -397,6 +433,7 @@ func _check_win() -> void:
 		ended = true
 		result = "won"
 		log_msg("The guns are silent. The countryside is yours.")
+		Sound.play("ulla", -2.0, 0.0)
 		_end()
 
 
@@ -407,12 +444,19 @@ func _lose(why: String) -> void:
 	result = "lost"
 	machine.beam_on = false
 	log_msg("You are %s." % why)
+	Sound.play("shield_fail", 0.0, 0.0)
+	Sound.play("sting_death", 0.0, 0.0)
 	hud.set_meta("why", why)
 	_end()
 
 
+func _dist(p: Vector3) -> float:
+	return p.distance_to(machine.global_position)
+
+
 func _end() -> void:
 	machine.beam_on = false
+	Sound.loop("ray_hum", false)
 	if autotest:
 		_finish_test()
 
@@ -515,10 +559,12 @@ func _run_test() -> void:
 
 
 func _finish_test() -> void:
+	if Sound.is_quitting():
+		return
 	print("--- pilot summary t=%.1f result=%s hull=%.0f shield=%.0f captives=%d guns_left=%d houses_burned=%d sickness=%.2f" % [
 		time, result, hull, shield, machine.captives, _guns_left(), houses_burned, sickness])
 	if _shot_dir == "":
-		get_tree().quit()
+		Sound.quit_game()
 
 
 func _shoot(t: float) -> void:
