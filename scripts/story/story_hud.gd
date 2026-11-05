@@ -40,14 +40,17 @@ func _draw() -> void:
 	var s = scene
 	var d: Dictionary = s.data
 
-	# chapter title, place, goal
-	draw_rect(Rect2(12, 12, 560, 78), Color(0.06, 0.03, 0.02, 0.8))
-	draw_rect(Rect2(12, 12, 560, 78), Color(0.8, 0.38, 0.15, 0.55), false, 1.0)
+	# chapter title, place, goal (the goal wraps onto a second line if long)
+	var g: String = s.goal()
+	var show_goal: bool = g != "" and s.busy.is_empty() and s.queue.is_empty()
+	var two := show_goal and font.get_string_size("> " + g, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x > 536.0
+	var box := Rect2(12, 12, 560, 98 if two else 78)
+	draw_rect(box, Color(0.06, 0.03, 0.02, 0.8))
+	draw_rect(box, Color(0.8, 0.38, 0.15, 0.55), false, 1.0)
 	draw_string(serif, Vector2(24, 38), d.get("title", ""), HORIZONTAL_ALIGNMENT_LEFT, 540, 19, AMBER)
 	draw_string(font, Vector2(24, 58), d.get("place", ""), HORIZONTAL_ALIGNMENT_LEFT, 540, 12, Color(CREAM, 0.6))
-	var g: String = s.goal()
-	if g != "" and s.busy.is_empty() and s.queue.is_empty():
-		draw_string(font, Vector2(24, 80), "> " + g, HORIZONTAL_ALIGNMENT_LEFT, 540, 14, Color(0.7, 1.0, 0.7))
+	if show_goal:
+		_wrap("> " + g, Vector2(24, 80), 536.0, 14, Color(0.7, 1.0, 0.7), font)
 
 	# the gold marker: where the goal is
 	var gt: Vector2 = s.goal_target()
@@ -84,8 +87,8 @@ func _draw() -> void:
 		var col := Color(0.6, 1.0, 0.6) if cov else Color(1, 0.6, 0.4)
 		if s.pre_flash > 0.0:
 			txt += "   -   the sky is flickering..."
-		draw_string_outline(font, Vector2(24, 112), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 5, Color(0, 0, 0, 0.8))
-		draw_string(font, Vector2(24, 112), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, col)
+		draw_string_outline(font, Vector2(24, 134), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 5, Color(0, 0, 0, 0.8))
+		draw_string(font, Vector2(24, 134), txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, col)
 	if s.ray.get("on", false) and not s.dead and not s.done:
 		var msg := "The heat-ray is sweeping the common! Hide behind the sand hummocks."
 		draw_string_outline(serif, Vector2(0, 130), msg, HORIZONTAL_ALIGNMENT_CENTER, w, 20, 6, Color(0, 0, 0, 0.8))
@@ -102,7 +105,10 @@ func _draw() -> void:
 			"scope":
 				_scope(w, h)
 	if s.done:
-		_card(w, h, "CHAPTER COMPLETE", d.get("title", ""), Touch.hint("E  continue the story", "tap to continue the story"))
+		if d.has("next"):
+			_card(w, h, "THE FLIGHT GOES ON...", d.get("title", ""), Touch.hint("E  continue", "tap to continue"))
+		else:
+			_card(w, h, "CHAPTER COMPLETE", d.get("title", ""), Touch.hint("E  continue the story", "tap to continue the story"))
 	elif s.dead:
 		_card(w, h, "KILLED", s.dead_why, Touch.hint("E  try again from the last safe place", "tap to try again from the last safe place"))
 

@@ -63,11 +63,19 @@ const AMBIENCE := {
 	"b1_10": [["rain_loop", -4.0], ["wind_loop", -8.0]],
 	"b1_11": [["fire_loop", -20.0], ["night_loop", -16.0]],
 	"b1_13": [["wind_loop", -16.0], ["fire_loop", -22.0]],
+	"b1_14": [["panic_loop", -12.0], ["fire_loop", -24.0]],
+	"b1_16": [["crowd_loop", -16.0], ["wind_loop", -18.0]],
 }
 const STEPS := {"floor": "step_floor", "round_room": "step_floor", "town": "step_gravel", "heath": "step_grass"}
 
+## Set when one story scene leads straight into the next (data "next").
+static var _next_story := ""
+
 var _step_t := 0.0
 var _tick_t := 0.0
+## Traffic lanes: [{def, lanes: [{x, spd}], walkers: [HousePerson]}]
+var _traffic: Array[Dictionary] = []
+var _following := false
 ## Tap (or click) to walk: where to, and what to use on arrival.
 var walk_goal := Vector2.INF
 var walk_use := ""
@@ -86,6 +94,9 @@ func _ready() -> void:
 		elif a.begins_with("--shot-times="):
 			for v in a.substr(13).split(","):
 				_shot_times.append(float(v))
+	if _next_story != "":
+		id = _next_story
+		_next_story = ""
 	if id == "":
 		id = CampaignState.story_id()
 	data = load("res://scripts/story/chapters/%s.gd" % id).data()
@@ -125,6 +136,13 @@ func _ready() -> void:
 			p.facing = (c.get("face", area.get_center()) - p.position).normalized()
 			p.scale = Vector2.ONE * 0.85
 			crowd.append(p)
+
+	if data.has("chaise"):
+		world.chaise = (data.chaise as Dictionary).duplicate()
+	for n in data.get("npcs", []):
+		if n.has("ride"):
+			npcs[n.id].set_meta("ride", int(n.ride))
+	_setup_traffic()
 
 	var layer := CanvasLayer.new()
 	add_child(layer)
@@ -246,6 +264,8 @@ func _process(delta: float) -> void:
 	if _shot_dir != "" and not _shot_times.is_empty() and time >= _shot_times[0]:
 		_shoot(_shot_times.pop_front())
 	_move_npcs(delta)
+	_update_traffic(delta)
+	_update_chaise(delta)
 	_update_ray(delta)
 	_update_machines(delta)
 	_update_storm(delta)
@@ -387,9 +407,30 @@ func _run(a: Array) -> void:
 			next_flash = 2.5
 		"checkpoint":
 			checkpoint = {"pos": player.position, "step": step_i}
+			if world.chaise.has("pos"):
+				checkpoint["chaise"] = world.chaise.pos
 		"speed":
 			# ["speed", multiplier]: how fast the player can walk
 			data["player_speed"] = float(a[1])
+		"down":
+			# ["down", npc, true/false]: knocked down (or back on their feet)
+			if npcs.has(a[1]):
+				npcs[a[1]].down = bool(a[2])
+				npc_goal.erase(a[1])
+		"follow":
+			# ["follow", true/false]: the pony-chaise follows the player
+			_following = bool(a[1])
+		"ride":
+			# ["ride", npc, seat]: an npc sits in the chaise (seat 0 or 1; -1 gets out)
+			if npcs.has(a[1]):
+				if int(a[2]) < 0:
+					npcs[a[1]].remove_meta("ride")
+				else:
+					npcs[a[1]].set_meta("ride", int(a[2]))
+		"chaise_to":
+			# ["chaise_to", pos]: put the chaise somewhere (and stop following)
+			_following = false
+			world.chaise["pos"] = a[1]
 		"end":
 			done = true
 			Sound.loop("ray_hum", false)
@@ -509,6 +550,116 @@ func _tap(p: Vector2) -> void:
 	_walk_stuck = 0.0
 
 
+# ---------------------------------------------------------------- traffic
+
+## Lanes of fleeing traffic: carts and cabs (deadly to touch) and people on
+## foot, all streaming one way. Inside a lane you are pushed along with it.
+func _setup_traffic() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(id)
+	for t in data.get("traffic", []):
+		var r: Rect2 = t.rect
+		var d: Vector2 = t.get("dir", Vector2.UP)
+		var across := r.size.x if absf(d.y) > 0.5 else r.size.y
+		var along := r.size.y if absf(d.y) > 0.5 else r.size.x
+		# "band": where the wheels run, across the lane (the margins are for people on foot)
+		var band: Vector2 = t.get("band", Vector2(0, across))
+		var nl := maxi(1, int((band.y - band.x) / 70.0))
+		var lanes := []
+		for i in nl:
+			var off := band.x + (i + 0.5) * (band.y - band.x) / nl
+			var sp: Array = t.get("speed", [70.0, 140.0])
+			lanes.append({"off": off, "spd": rng.randf_range(sp[0], sp[1])})
+		var info := {"def": t, "lanes": lanes, "walkers": [], "dir": d}
+		var kinds := [["cart", Color(0.4, 0.3, 0.18), 90.0, 40.0, 1], ["cab", Color(0.12, 0.12, 0.14), 70.0, 36.0, 1],
+			["waggon", Color(0.5, 0.38, 0.2), 130.0, 48.0, 2], ["carriage", Color(0.2, 0.08, 0.06), 90.0, 40.0, 2]]
+		for k in int(t.get("vehicles", 0)):
+			var lane: Dictionary = lanes[k % nl]
+			var kd: Array = kinds[rng.randi() % kinds.size()]
+			var pos_along := fmod(k * 0.37 + (k / nl) * 0.5, 1.0) * along
+			var v := {"lane": lanes.find(lane), "t": info, "dir": d, "kind": kd[0], "col": kd[1], "len": kd[2], "w": kd[3], "horses": kd[4]}
+			v["p"] = _lane_point(r, d, lane.off, pos_along)
+			world.vehicles.append(v)
+		for k in int(t.get("walkers", 0)):
+			var w := _person("", "", _lane_point(r, d, rng.randf() * across, rng.randf() * along),
+				[Color(0.3, 0.25, 0.2), Color(0.22, 0.24, 0.3), Color(0.4, 0.3, 0.2), Color(0.3, 0.2, 0.28), Color(0.5, 0.48, 0.42)][k % 5])
+			w.scale = Vector2.ONE * 0.85
+			w.facing = d
+			w.moving = true
+			w.set_meta("spd", rng.randf_range(55.0, 95.0))
+			info.walkers.append(w)
+		_traffic.append(info)
+
+
+func _lane_point(r: Rect2, d: Vector2, off: float, along: float) -> Vector2:
+	# along runs in the direction of travel, from the entry edge
+	if absf(d.y) > 0.5:
+		return Vector2(r.position.x + off, r.end.y - along if d.y < 0 else r.position.y + along)
+	return Vector2(r.end.x - along if d.x < 0 else r.position.x + along, r.position.y + off)
+
+
+func _wrap(p: Vector2, r: Rect2, d: Vector2) -> Vector2:
+	if d.y < -0.5 and p.y < r.position.y - 60: p.y = r.end.y + 60
+	elif d.y > 0.5 and p.y > r.end.y + 60: p.y = r.position.y - 60
+	elif d.x < -0.5 and p.x < r.position.x - 60: p.x = r.end.x + 60
+	elif d.x > 0.5 and p.x > r.end.x + 60: p.x = r.position.x - 60
+	return p
+
+
+func _update_traffic(delta: float) -> void:
+	for info in _traffic:
+		var t: Dictionary = info.def
+		var r: Rect2 = t.rect
+		var d: Vector2 = info.dir
+		for w in info.walkers:
+			var hp: HousePerson = w
+			hp.position = _wrap(hp.position + d * float(hp.get_meta("spd")) * delta, r, d)
+		# the stream carries you along (in the carriageway; the margins are slower)
+		if r.has_point(player.position) and not dead and not done:
+			var off := player.position.x - r.position.x if absf(d.y) > 0.5 else player.position.y - r.position.y
+			var band: Vector2 = t.get("band", Vector2(-1e9, 1e9))
+			var k := 1.0 if (off >= band.x and off <= band.y) else 0.15
+			var q := player.position + d * float(t.get("push", 40.0)) * k * delta
+			if not world.solid(q, 10.0):
+				player.position = q
+	for v in world.vehicles:
+		var info: Dictionary = v.t
+		var lane: Dictionary = info.lanes[v.lane]
+		v.p = _wrap((v.p as Vector2) + (v.dir as Vector2) * float(lane.spd) * delta, info.def.rect, v.dir)
+		if dead or done or autotest or not busy.is_empty():
+			continue
+		# under the wheels?
+		var rel: Vector2 = player.position - (v.p as Vector2)
+		var dd: Vector2 = v.dir
+		var along := rel.dot(dd)
+		var side := absf(rel.dot(dd.orthogonal()))
+		if along > -float(v.len) * 0.5 and along < float(v.len) * 0.18 + 30.0 and side < float(v.w) * 0.5 + 2.0:
+			_die(String(info.def.get("why", "You went down under the wheels.")))
+			player.down = true
+			Sound.play("scream", -4.0)
+
+
+## The pony-chaise trails behind the player; its passengers ride in it.
+func _update_chaise(delta: float) -> void:
+	if world.chaise.is_empty():
+		return
+	var cp: Vector2 = world.chaise.pos
+	if _following and not dead:
+		var to := player.position - cp
+		if to.length() > 70.0:
+			world.chaise["dir"] = to.normalized()
+			world.chaise["pos"] = cp + to.normalized() * (to.length() - 70.0)
+	var cd: Vector2 = world.chaise.get("dir", Vector2.RIGHT)
+	for nid in npcs.keys():
+		var p: HousePerson = npcs[nid]
+		if p.has_meta("ride"):
+			var seat := int(p.get_meta("ride"))
+			p.position = (world.chaise.pos as Vector2) - cd * 6.0 + cd.orthogonal() * (8.0 if seat == 0 else -8.0)
+			p.facing = cd
+			p.moving = false
+			npc_goal.erase(nid)
+
+
 func _move_npcs(delta: float) -> void:
 	for nid in npc_goal.keys():
 		var p: HousePerson = npcs[nid]
@@ -621,6 +772,8 @@ func _die(why: String) -> void:
 
 
 func respawn() -> void:
+	if world.chaise.has("pos") and checkpoint.has("chaise"):
+		world.chaise["pos"] = checkpoint.chaise
 	walk_goal = Vector2.INF
 	walk_use = ""
 	dead = false
@@ -693,6 +846,11 @@ func nearest_interactable() -> Dictionary:
 
 
 func _complete() -> void:
+	if data.has("next"):
+		# this chapter goes on in another place: load the next scene of it
+		_next_story = data.next
+		get_tree().reload_current_scene()
+		return
 	if CampaignState.active:
 		CampaignState.complete()
 	else:

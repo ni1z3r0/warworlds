@@ -178,8 +178,10 @@ const CHAPTERS := [
 		"music": "mendelssohn_80",
 		"book": BOOK_ONE,
 		"cast": ["brother", "mrs_elphinstone", "miss_elphinstone"],
+		"story": "b1_14",
+		"mode": "Story: play as the narrator's brother, from London to Barnet",
 		"plates": [
-			["plate_0255.jpg", "Your brother, a medical student in London, wakes to the news. \"It was the beginning of the rout of civilisation, of the massacre of mankind.\" Coming soon: lead a column of refugees out of the city."],
+			["plate_0255.jpg", "Meanwhile your brother, a medical student in London, wakes before dawn on Monday to the great panic. \"It was the beginning of the rout of civilisation, of the massacre of mankind.\" You play as him: out of London, and across the Great North Road."],
 		],
 	},
 	{

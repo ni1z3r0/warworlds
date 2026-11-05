@@ -58,7 +58,8 @@ Choose **THE STORY** on the main menu. The game follows the novel's own chapters
 | XII. The Destruction of Weybridge and Shepperton | First person: the artilleryman's gun |
 | Interlude: The Martian | First person: the fighting-machine |
 | XIII. How I Fell In with the Curate | Story: come ashore sick near Walton, find shade, and meet the curate. The whole conversation is in Wells' words. |
-| XIV to XVII (London, the Exodus, the *Thunder Child*) | Read (playable soon) |
+| XIV to XVI. In London; The Exodus | Story, as the narrator's brother. Before dawn on Monday the panic wakes you: get to Chalk Farm between the galloping cabs. Then rescue the Elphinstones from three robbers, and cross the Great North Road's "torrent of human beings" with their pony-chaise. |
+| XVII. The *Thunder Child* | Read (playable soon) |
 
 | Book Two | How you play it |
 |---|---|

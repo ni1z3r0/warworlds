@@ -4,7 +4,9 @@ extends Node2D
 ## answers collision queries. Prop kinds: telescope, table, siphon, lantern,
 ## pine, house, pit, cylinder, road, bridge, fence, hummock, crate, cart,
 ## river (water you cannot walk into), hedge (a line of bushes; cover),
-## boat. A chapter's "heliograph" (Vector2) flickers on the far hills.
+## boat, floor (painted boards, for interiors). A chapter's "heliograph"
+## (Vector2) flickers on the far hills. Traffic (vehicles) and the pony-chaise
+## are moved by the story scene and drawn here.
 
 const W := 1600
 const H := 900
@@ -18,6 +20,8 @@ var machines: Array[Dictionary] = []   # fighting-machines walking the map
 var flash := 0.0                         # lightning, 0..1
 var ray_to := Vector2.ZERO
 var cylinder_open := false
+var vehicles: Array[Dictionary] = []     # {p, dir, len, w, kind, col}
+var chaise := {}                          # {pos, dir} while there is one
 var font: Font
 var _t := 0.0
 var _decor: Array[Dictionary] = []
@@ -126,8 +130,20 @@ func _draw() -> void:
 	for dd in _decor:
 		var c: Color = [Color(0.3, 0.2, 0.2, 0.6), Color(0.25, 0.22, 0.12, 0.5), Color(0.42, 0.34, 0.22, 0.5)][dd.k]
 		draw_circle(dd.p, dd.r, c)
-	# rivers and roads first
+	# floors, rivers and roads first
 	for pr in data.get("props", []):
+		if pr.kind == "street":
+			var sr: Rect2 = pr.rect
+			draw_rect(sr, Color(0.24, 0.22, 0.2))
+			for k in 260:
+				draw_circle(sr.position + Vector2(fmod(k * 97.3, sr.size.x), fmod(k * 41.7, sr.size.y)), 2.0, Color(0.3, 0.28, 0.25))
+			draw_line(sr.position, Vector2(sr.end.x, sr.position.y), Color(0.45, 0.42, 0.38), 3.0)
+			draw_line(Vector2(sr.position.x, sr.end.y), sr.end, Color(0.45, 0.42, 0.38), 3.0)
+		if pr.kind == "floor":
+			var fr: Rect2 = pr.rect
+			draw_rect(fr, Color(0.3, 0.22, 0.15))
+			for y in range(int(fr.position.y) + 16, int(fr.end.y), 18):
+				draw_line(Vector2(fr.position.x, y), Vector2(fr.end.x, y), Color(0.22, 0.16, 0.11), 1.0)
 		if pr.kind == "river":
 			var pts := PackedVector2Array(pr.pts)
 			var wd := float(pr.get("w", 120.0))
@@ -156,11 +172,26 @@ func _draw() -> void:
 		var a0: float = rr.door + 0.22
 		draw_arc(rr.c, rr.r - 8, a0, a0 + TAU - 0.44, 64, ink, 18.0)
 		draw_arc(rr.c, rr.r, a0, a0 + TAU - 0.44, 64, Color(0.45, 0.35, 0.25), 2.0)
-	for pr in data.get("props", []):
-		_draw_prop(pr, ink)
 	for w in data.get("walls", []):
+		if data.get("hide_walls", []).has(data.walls.find(w)):
+			continue
 		draw_rect(w, Color(0.16, 0.12, 0.09))
 		draw_rect(w, ink, false, 2.0)
+	for pr in data.get("props", []):
+		_draw_prop(pr, ink)
+	if not chaise.is_empty():
+		_draw_chaise(chaise.pos, chaise.dir)
+	for v in vehicles:
+		_draw_vehicle(v, ink)
+	for tl in data.get("traffic", []):
+		if tl.get("dust", false):
+			var tr: Rect2 = tl.rect
+			draw_rect(tr, Color(0.85, 0.8, 0.7, 0.16))
+			for k in 24:
+				var c := tr.position + Vector2(fmod(k * 97.0, tr.size.x), fmod(k * 61.0 - _t * 70.0, tr.size.y))
+				if c.y < tr.position.y:
+					c.y += tr.size.y
+				draw_circle(c, 40.0 + fmod(k * 13.0, 30.0), Color(0.88, 0.84, 0.74, 0.1))
 	if martian_at != Vector2.INF:
 		_draw_martian(martian_at)
 	for m in machines:
@@ -307,6 +338,51 @@ func _draw_prop(pr: Dictionary, ink: Color) -> void:
 
 ## A fighting-machine seen from above, after Alvim Corrêa: hat, two eyes,
 ## needle legs, the basket on its back.
+func _draw_vehicle(v: Dictionary, ink: Color) -> void:
+	var d: Vector2 = v.dir
+	var n := d.orthogonal()
+	var p: Vector2 = v.p
+	var hl: float = v.len * 0.5
+	var hw: float = v.w * 0.5
+	var body := PackedVector2Array([p + d * hl * 0.35 + n * hw, p + d * hl * 0.35 - n * hw, p - d * hl - n * hw, p - d * hl + n * hw])
+	draw_colored_polygon(body, v.col)
+	body.append(body[0])
+	draw_polyline(body, ink, 2.0)
+	# wheels
+	for sgn in [-1.0, 1.0]:
+		draw_line(p - d * hl * 0.7 + n * hw * sgn * 1.15, p - d * hl * 0.2 + n * hw * sgn * 1.15, ink, 5.0)
+	# the horse(s) in front
+	var horses: int = v.get("horses", 1)
+	for k in horses:
+		var hp := p + d * (hl * 0.35 + 22.0) + n * ((k - (horses - 1) * 0.5) * 18.0)
+		draw_set_transform(hp, d.angle(), Vector2.ONE)
+		draw_circle(Vector2.ZERO, 8.0, Color(0.32, 0.2, 0.12))
+		draw_rect(Rect2(-16, -6, 26, 12), Color(0.32, 0.2, 0.12))
+		draw_circle(Vector2(14, 0), 5.0, Color(0.25, 0.15, 0.1))
+		draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+	if v.get("kind", "") == "cab":
+		draw_rect(Rect2(p - Vector2(6, 6) - d * hl * 0.4, Vector2(12, 12)), Color(1, 0.85, 0.4, 0.8))   # a lamp
+
+
+func _draw_chaise(p: Vector2, d: Vector2) -> void:
+	var n := d.orthogonal()
+	var ink := Color(0.1, 0.07, 0.05)
+	var body := PackedVector2Array([p + d * 14 + n * 16, p + d * 14 - n * 16, p - d * 22 - n * 16, p - d * 22 + n * 16])
+	draw_colored_polygon(body, Color(0.42, 0.3, 0.16))
+	body.append(body[0])
+	draw_polyline(body, ink, 2.0)
+	for sgn in [-1.0, 1.0]:
+		draw_circle(p - d * 4 + n * 20 * sgn, 7, ink)
+	# the pony and its shafts
+	draw_line(p + d * 14 + n * 8, p + d * 46 + n * 8, ink, 2.0)
+	draw_line(p + d * 14 - n * 8, p + d * 46 - n * 8, ink, 2.0)
+	var hp := p + d * 44
+	draw_set_transform(hp, d.angle(), Vector2.ONE)
+	draw_rect(Rect2(-12, -6, 22, 12), Color(0.45, 0.35, 0.25))
+	draw_circle(Vector2(12, 0), 5.0, Color(0.38, 0.28, 0.2))
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
+
+
 func _draw_machine(m: Dictionary) -> void:
 	var p: Vector2 = m.pos
 	var f: Vector2 = m.get("facing", Vector2.LEFT)
