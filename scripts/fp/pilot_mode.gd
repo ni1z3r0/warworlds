@@ -93,7 +93,8 @@ func _ready() -> void:
 	hud.mode = self
 	layer.add_child(hud)
 
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not Touch.is_touch():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sound.music_for("res://scenes/pilot.tscn")
 	Sound.loop("wind_loop", true, -10.0)
 	Sound.loop("panic_loop", true, -24.0)
@@ -101,6 +102,8 @@ func _ready() -> void:
 	log_msg("You stand over Horsell Common. The humans have brought up guns.")
 	log_msg("Silence the five batteries. Their shells cannot pierce your shield... for long.")
 	_parse_args()
+	_touch_layout()
+	HowTo.show_once("pilot", self)
 
 
 func _exit_tree() -> void:
@@ -478,11 +481,11 @@ func _seg_dist(a: Vector3, b: Vector3, p: Vector3) -> float:
 # ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused:
+	if event is InputEventMouseMotion and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or Touch.is_touch()) and not paused:
 		machine.rotation.y -= event.relative.x * 0.0022
 		pitch = clampf(pitch - event.relative.y * 0.0022, -1.2, 0.35)
 	elif event is InputEventMouseButton and event.pressed:
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not ended:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not ended and not Touch.is_touch():
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			paused = false
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -507,6 +510,28 @@ func _unhandled_input(event: InputEvent) -> void:
 				show_help = not show_help
 			KEY_M:
 				get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+# ---------------------------------------------------------------- touch
+
+func _touch_layout() -> void:
+	var b := [
+		{"label_fn": func() -> String: return "FIRE" if _live() else "", "mouse": MOUSE_BUTTON_LEFT, "pos": Vector2(1460, 680), "r": 74.0},
+		{"label_fn": func() -> String: return "GRAB" if _live() else "", "key": KEY_E, "pos": Vector2(1290, 760), "r": 52.0},
+		{"label_fn": func() -> String: return "SMOKE" if _live() else "", "key": KEY_F, "pos": Vector2(1300, 590), "r": 46.0},
+		{"label_fn": func() -> String: return "STRIDE" if _live() else "", "key": KEY_SHIFT, "pos": Vector2(1470, 510), "r": 44.0},
+		{"label_fn": func() -> String: return "VIEW" if _live() else "", "key": KEY_V, "pos": Vector2(1140, 760), "r": 40.0},
+		{"label_fn": func() -> String: return "" if ended else ("RESUME" if paused else "PAUSE"), "key": KEY_ESCAPE, "pos": Touch.pause_pos(), "r": 38.0},
+	]
+	b.append_array(Touch.common_buttons(func() -> bool: return ended,
+		func() -> bool: return result == "won" and CampaignState.active, "pilot", self))
+	Touch.layout({"stick": true, "look": true, "buttons": b})
+	if Touch.is_touch():
+		show_help = false
+
+
+func _live() -> bool:
+	return not ended and not paused
 
 
 # ---------------------------------------------------------------- automated test

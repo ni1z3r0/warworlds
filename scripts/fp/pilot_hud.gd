@@ -77,7 +77,8 @@ func _draw() -> void:
 		if i < mode.machine.captives:
 			draw_circle(p, 7, Color(0.9, 0.75, 0.6))
 		draw_arc(p, 9, 0, TAU, 16, Color(GREEN, 0.6), 1.5)
-	draw_string(font, Vector2(rx, y + 60), "F1  controls guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.45))
+	if not Touch.is_touch():
+		draw_string(font, Vector2(rx, y + 60), "F1  controls guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(1, 1, 1, 0.45))
 
 	# messages, top centre
 	var my := 70.0

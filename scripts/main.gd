@@ -69,6 +69,7 @@ func _ready() -> void:
 	tripod.waypoints = [Vector2(420, 280), Vector2(250, 330), Vector2(560, 460),
 		Vector2(340, 600), Vector2(760, 640), Vector2(1150, 560), Vector2(1300, 380), Vector2(1240, 250)]
 	game.add_child(tripod)
+	_touch_layout()
 	Sound.music_for("res://scenes/main.tscn")
 	Sound.loop("wind_loop", true, -16.0)
 	Sound.loop("distant_guns", true, -16.0)
@@ -103,6 +104,7 @@ func _ready() -> void:
 	if autotest:
 		_setup_autotest()
 	start()
+	HowTo.show_once("rts", self)
 
 
 func _setup_unit(u: Unit, n: String, r: String, spd: float, pos: Vector2) -> void:
@@ -333,7 +335,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if ended or get_tree().paused:
 		return
 	if event is InputEventMouseButton:
-		var mp := get_global_mouse_position()
+		var mp: Vector2 = get_canvas_transform().affine_inverse() * (event as InputEventMouseButton).position
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
 				dragging = true
@@ -342,11 +344,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif dragging:
 				dragging = false
 				drag_end = mp
-				_select_area(drag_start, drag_end, event.shift_pressed)
+				# on a touch screen a tap on open ground is an order, not a deselect
+				if Touch.is_touch() and drag_start.distance_to(drag_end) < 12.0 and not selected.is_empty() and _unit_at(drag_end) == null:
+					command(drag_end)
+				else:
+					_select_area(drag_start, drag_end, event.shift_pressed)
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 			command(mp)
 	elif event is InputEventMouseMotion and dragging:
-		drag_end = get_global_mouse_position()
+		drag_end = get_canvas_transform().affine_inverse() * (event as InputEventMouseMotion).position
 
 
 func _on_key(k: Key) -> void:
@@ -393,6 +399,34 @@ func _set_selection(list: Array) -> void:
 		if u.alive and not u.escaped:
 			selected.append(u)
 			u.selected = true
+
+
+func _unit_at(p: Vector2) -> Unit:
+	for u in units:
+		if u.alive and u.position.distance_to(p) < 22.0:
+			return u
+	return null
+
+
+func _touch_layout() -> void:
+	var b := [
+		{"label_fn": func() -> String: return "" if ended or not started or not _has_survivor_selected() else "HIDE", "key": KEY_H, "pos": Vector2(1490, 900), "r": 56.0},
+		{"label_fn": func() -> String: return ("LIMBER" if gun.is_deployed() else "DEPLOY\nGUN") if gun in selected and not ended else "", "key": KEY_D, "pos": Vector2(1350, 920), "r": 56.0},
+		{"label_fn": func() -> String: return "" if ended or not started else "ALL", "key": KEY_A, "pos": Vector2(1490, 760), "r": 44.0},
+		{"label_fn": func() -> String: return "" if ended or not started else ("RESUME" if get_tree().paused else "PAUSE"), "key": KEY_SPACE, "pos": Touch.pause_pos(Vector2(1180, 50)), "r": 38.0},
+	]
+	b.append_array(Touch.common_buttons(func() -> bool: return ended,
+		func() -> bool: return result == "won" and CampaignState.active, "rts", self, Vector2(1180, 50)))
+	Touch.layout({"buttons": b})
+	if Touch.is_touch():
+		show_help = false   # the keyboard guide; touch players get the card
+
+
+func _has_survivor_selected() -> bool:
+	for u in selected:
+		if u is Survivor:
+			return true
+	return false
 
 
 func _select_area(a: Vector2, b: Vector2, add: bool) -> void:

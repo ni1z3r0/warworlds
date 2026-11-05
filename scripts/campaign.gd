@@ -32,6 +32,11 @@ func _ready() -> void:
 	serif = sf
 	chapter = clampi(CampaignState.get_current(), 0, Story.CHAPTERS.size() - 1)
 	Sound.music("la_malinconia")
+	Touch.layout({"buttons": [
+		{"label": "MENU", "key": KEY_ESCAPE, "pos": Vector2(1550, 50), "r": 38.0},
+		{"label": "?", "call": func() -> void: HowTo.show_card("book", self), "pos": Vector2(1460, 50), "r": 38.0},
+	]})
+	HowTo.show_once("book", self)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--chapter="):
 			chapter = int(a.substr(10))

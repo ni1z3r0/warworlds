@@ -128,6 +128,29 @@ func _ready() -> void:
 	log_msg("Keep quiet, keep out of the green light, and keep the Curate from breaking.")
 	curate.say("We are safe here", 4.0)
 	_parse_args()
+	_touch_layout()
+	HowTo.show_once("house", self)
+
+
+func _touch_layout() -> void:
+	var b := [
+		{"label_fn": _use_label, "key": KEY_E, "pos": Vector2(1470, 860), "r": 70.0},
+		{"label_fn": func() -> String: return "STRIKE" if not ended and context_action().begins_with("F") else "", "key": KEY_F, "pos": Vector2(1300, 760), "r": 58.0},
+		{"label_fn": func() -> String: return "" if ended or paused or in_coal or peeping else "HURRY", "key": KEY_SHIFT, "pos": Vector2(1300, 910), "r": 48.0},
+		{"label_fn": func() -> String: return "" if ended else ("RESUME" if paused else "PAUSE"), "key": KEY_ESCAPE, "pos": Touch.pause_pos(Vector2(1180, 50)), "r": 38.0},
+	]
+	b.append_array(Touch.common_buttons(func() -> bool: return ended,
+		func() -> bool: return result == "won" and CampaignState.active, "house", self, Vector2(1180, 50)))
+	Touch.layout({"stick": true, "buttons": b})
+	if Touch.is_touch():
+		show_help = false
+
+
+func _use_label() -> String:
+	var a := context_action()
+	if ended or paused or not (a.begins_with("E") or a.begins_with("Hold E")):
+		return ""
+	return "HOLD\nUSE" if a.begins_with("Hold") else "USE"
 
 
 func _light(c: Color, energy: float, scale_: float) -> PointLight2D:

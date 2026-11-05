@@ -8,6 +8,7 @@ const MODES := [
 	["THE FIGHTING BEGINS", "Strategy: escort the narrator, his wife and the landlord to Leatherhead.", "res://scenes/main.tscn"],
 	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
 	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
+	["HOW TO PLAY", "The controls for keyboard and touch screen, and how each part of the game works.", "res://scenes/how_to_play.tscn"],
 ]
 var hover := -1
 var _drag := ""   # "music" or "sfx" while dragging a volume slider
@@ -23,6 +24,10 @@ func _ready() -> void:
 	sf.font_names = PackedStringArray(["DejaVu Serif", "Georgia", "Times New Roman", "Liberation Serif", "serif"])
 	serif = sf
 	Sound.music("tragic_overture")
+	var b := []
+	if OS.has_feature("web"):
+		b.append({"label": "FULL\nSCREEN", "call": _fullscreen, "pos": Vector2(1550, 50), "r": 40.0})
+	Touch.layout({"buttons": b})
 	Sound.loop("wind_loop", true, -18.0)
 	Sound.loop("fire_loop", true, -24.0)
 
@@ -176,7 +181,7 @@ func _draw() -> void:
 		draw_rect(r, Color(1, 0.6, 0.25, 0.95 if on else 0.45), false, 2.0 if on else 1.0)
 		draw_string(serif, r.position + Vector2(18, 34), "%d   %s" % [i + 1, MODES[i][0]], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(1, 0.85, 0.55) if on else cream)
 		draw_string(font, r.position + Vector2(46, 60), MODES[i][1], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(cream, 0.75))
-	draw_string(font, Vector2(0, 985), "Click a mode or press 1, 2, 3 or 4", HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
+	draw_string(font, Vector2(0, 985), Touch.hint("Click a mode or press 1 to 5", "Tap a mode to begin"), HORIZONTAL_ALIGNMENT_CENTER, w, 13, Color(cream, 0.5))
 	_draw_slider("music", "MUSIC", Sound.music_volume, cream)
 	_draw_slider("sfx", "EFFECTS", Sound.sfx_volume, cream)
 	draw_string(font, Vector2(1000, 950), "Music: Czech National Symphony Orchestra, Musopen (public domain)", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(cream, 0.45))
@@ -205,7 +210,12 @@ func _set_slider(which: String, x: float) -> void:
 
 
 func _option_rect(i: int) -> Rect2:
-	return Rect2(1000, 500 + i * 84, 560, 74)
+	return Rect2(1000, 420 + i * 82, 560, 72)
+
+
+func _fullscreen() -> void:
+	var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -246,6 +256,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_go(2)
 			KEY_4:
 				_go(3)
+			KEY_5:
+				_go(4)
 
 
 func _go(i: int) -> void:

@@ -91,7 +91,7 @@ func _draw() -> void:
 		_banner("IT IS TOUCHING YOUR BOOT. DON'T MOVE.", Color(1, 0.35, 0.25, 0.7 + 0.3 * sin(_t * 18)), 160.0)
 
 	# context prompt by the narrator
-	var act: String = m.context_action()
+	var act: String = Touch.prompt(m.context_action(), {"Hold E  ": "Hold USE:  ", "E  ": "USE:  ", "F  ": "STRIKE:  "})
 	if act != "" and not m.ended:
 		var p: Vector2 = m.narrator.get_global_transform_with_canvas().origin + Vector2(0, 34)
 		draw_string_outline(font, p - Vector2(150, 0), act, HORIZONTAL_ALIGNMENT_CENTER, 300, 14, 4, Color(0, 0, 0, 0.85))

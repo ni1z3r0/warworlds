@@ -49,15 +49,34 @@ func _draw() -> void:
 	if g != "" and s.busy.is_empty() and s.queue.is_empty():
 		draw_string(font, Vector2(24, 80), "> " + g, HORIZONTAL_ALIGNMENT_LEFT, 540, 14, Color(0.7, 1.0, 0.7))
 
+	# the gold marker: where the goal is
+	var gt: Vector2 = s.goal_target()
+	if gt != Vector2.INF:
+		var gp: Vector2 = s.get_viewport().get_canvas_transform() * gt
+		var bob := sin(_t * 4.0) * 6.0
+		draw_arc(gp, 30.0 + 4.0 * sin(_t * 4.0), 0, TAU, 32, Color(1.0, 0.82, 0.3, 0.55), 2.5)
+		var tip_y := gp.y - 46.0 + bob
+		draw_colored_polygon(PackedVector2Array([Vector2(gp.x - 13, tip_y - 20), Vector2(gp.x + 13, tip_y - 20), Vector2(gp.x, tip_y)]), Color(1.0, 0.8, 0.25, 0.9))
+
+	# tutorial tip (the guided first chapter)
+	var tp: String = s.tip()
+	if tp != "":
+		var tr := Rect2(w * 0.5 - 430, 104, 860, 92)
+		draw_rect(tr, Color(0.1, 0.18, 0.08, 0.9))
+		draw_rect(tr, Color(0.6, 1.0, 0.55, 0.8), false, 2.0)
+		draw_string(font, tr.position + Vector2(16, 22), "HOW TO PLAY", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.7, 1.0, 0.65))
+		_wrap(tp, tr.position + Vector2(16, 48), tr.size.x - 32, 17, CREAM, font)
+
 	# prompt by the player
 	if s.busy.is_empty() and s.queue.is_empty() and not s.done and not s.dead:
 		var it: Dictionary = s.nearest_interactable()
 		if not it.is_empty():
 			var p: Vector2 = s.player.get_global_transform_with_canvas().origin + Vector2(0, 30)
-			var txt: String = "E  " + it.prompt
+			var txt: String = Touch.hint("E  ", "tap:  ") + it.prompt
 			draw_string_outline(font, p - Vector2(160, 0), txt, HORIZONTAL_ALIGNMENT_CENTER, 320, 15, 4, Color(0, 0, 0, 0.85))
 			draw_string(font, p - Vector2(160, 0), txt, HORIZONTAL_ALIGNMENT_CENTER, 320, 15, AMBER)
-	draw_string(font, Vector2(w - 330, h - 12), "WASD move   E talk / use / continue   M storybook", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(CREAM, 0.4))
+	if not Touch.is_touch():
+		draw_string(font, Vector2(w - 430, h - 12), "WASD move (or click to walk)   E talk / use / continue   M storybook", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(CREAM, 0.4))
 
 	if s.data.get("storm", false) and not s.dead and not s.done:
 		var cov: bool = s.world.in_cover(s.player.position)
@@ -83,9 +102,9 @@ func _draw() -> void:
 			"scope":
 				_scope(w, h)
 	if s.done:
-		_card(w, h, "CHAPTER COMPLETE", d.get("title", ""), "E  continue the story")
+		_card(w, h, "CHAPTER COMPLETE", d.get("title", ""), Touch.hint("E  continue the story", "tap to continue the story"))
 	elif s.dead:
-		_card(w, h, "KILLED", s.dead_why, "E  try again from the last safe place")
+		_card(w, h, "KILLED", s.dead_why, Touch.hint("E  try again from the last safe place", "tap to try again from the last safe place"))
 
 
 func _wrap(text: String, pos: Vector2, width: float, fsize: int, col: Color, f: Font) -> float:
@@ -115,7 +134,7 @@ func _dialogue(w: float, h: float, who: String, text: String) -> void:
 		tx = r.position.x + 136
 	draw_string(serif, Vector2(tx, r.position.y + 34), scene.speaker_name(who), HORIZONTAL_ALIGNMENT_LEFT, -1, 19, AMBER)
 	_wrap("\"" + text + "\"", Vector2(tx, r.position.y + 70), r.end.x - tx - 24, 19, CREAM, serif)
-	draw_string(font, Vector2(r.end.x - 120, r.end.y - 12), "E  continue", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.5 + 0.3 * sin(_t * 4)))
+	draw_string(font, Vector2(r.end.x - 120, r.end.y - 12), Touch.hint("E  continue", "tap to continue"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.5 + 0.3 * sin(_t * 4)))
 
 
 func _narration(w: float, h: float, text: String) -> void:
@@ -123,7 +142,7 @@ func _narration(w: float, h: float, text: String) -> void:
 	draw_rect(r, Color(PAPER, 0.95))
 	draw_rect(r.grow(-6), Color(INK, 0.6), false, 1.0)
 	_wrap(text, Vector2(r.position.x + 30, r.position.y + 44), r.size.x - 60, 19, INK, serif)
-	draw_string(font, Vector2(r.end.x - 120, r.end.y - 12), "E  continue", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(INK, 0.5 + 0.3 * sin(_t * 4)))
+	draw_string(font, Vector2(r.end.x - 120, r.end.y - 12), Touch.hint("E  continue", "tap to continue"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(INK, 0.5 + 0.3 * sin(_t * 4)))
 
 
 func _plate_card(w: float, h: float, file: String, text: String) -> void:
@@ -135,7 +154,7 @@ func _plate_card(w: float, h: float, file: String, text: String) -> void:
 	var ps := ts * k
 	draw_texture_rect(tex, Rect2(box.position + (box.size - ps) * 0.5, ps), false)
 	var y := _wrap(text, Vector2(w * 0.5 - 420, h - 160), 840, 19, CREAM, serif)
-	draw_string(font, Vector2(0, h - 30), "E  continue", HORIZONTAL_ALIGNMENT_CENTER, w, 12, Color(CREAM, 0.5 + 0.3 * sin(_t * 4)))
+	draw_string(font, Vector2(0, h - 30), Touch.hint("E  continue", "tap to continue"), HORIZONTAL_ALIGNMENT_CENTER, w, 12, Color(CREAM, 0.5 + 0.3 * sin(_t * 4)))
 
 
 ## "Looking through the telescope, one saw a circle of deep blue and the
@@ -161,7 +180,7 @@ func _scope(w: float, h: float) -> void:
 		var k := clampf((s.scope_t - s.scope_flash) / 1.2, 0.0, 1.0)
 		draw_circle(m + Vector2(44, -10), 6.0 + 10.0 * (1.0 - k), Color(1.0, 0.45, 0.3, 1.0 - k * 0.5))
 	draw_arc(c, r, 0, TAU, 96, Color(0.25, 0.25, 0.3), 6.0)
-	draw_string(serif, Vector2(0, h - 170), "Watch the edge of the planet. Press E the moment you see something.", HORIZONTAL_ALIGNMENT_CENTER, w, 19, CREAM)
+	draw_string(serif, Vector2(0, h - 170), Touch.hint("Watch the edge of the planet. Press E the moment you see something.", "Watch the edge of the planet. Tap the moment you see something."), HORIZONTAL_ALIGNMENT_CENTER, w, 19, CREAM)
 	if s.scope_note != "":
 		draw_string(font, Vector2(0, h - 135), s.scope_note, HORIZONTAL_ALIGNMENT_CENTER, w, 15, AMBER)
 	var tick := "tick" if int(_t * 2.0) % 2 == 0 else "tock"

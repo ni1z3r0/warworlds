@@ -143,7 +143,8 @@ func _ready() -> void:
 	hud.mode = self
 	layer.add_child(hud)
 
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if not Touch.is_touch():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	Sound.music_for("res://scenes/soldier.tscn")
 	Sound.loop("wind_loop", true, -14.0)
 	Sound.loop("fire_loop", true, -20.0)
@@ -151,6 +152,8 @@ func _ready() -> void:
 	log_msg("You: \"Gun destroyed last night, sir. Have been hiding. Trying to rejoin battery, sir.\"")
 	log_msg("Two people are in the machine's cage. Find an abandoned gun. Bring it down.")
 	_parse_args()
+	_touch_layout()
+	HowTo.show_once("soldier", self)
 
 
 func _exit_tree() -> void:
@@ -682,7 +685,7 @@ func _kill_player(how: String) -> void:
 # ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not paused and not ended:
+	if event is InputEventMouseMotion and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or Touch.is_touch()) and not paused and not ended:
 		if manning != null:
 			manning.carriage.rotation.y -= event.relative.x * 0.0012
 			manning.barrel_pivot.rotation.x = clampf(manning.barrel_pivot.rotation.x - event.relative.y * 0.0008, -0.05, 0.6)
@@ -691,7 +694,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			look_pitch = clampf(look_pitch - event.relative.y * 0.0022, -1.4, 1.4)
 			cam.rotation.x = look_pitch
 	elif event is InputEventMouseButton and event.pressed:
-		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not ended:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not ended and not Touch.is_touch():
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			paused = false
 		elif event.button_index == MOUSE_BUTTON_LEFT and manning != null:
@@ -717,6 +720,32 @@ func _unhandled_input(event: InputEvent) -> void:
 				show_help = not show_help
 			KEY_M:
 				get_tree().change_scene_to_file("res://scenes/menu.tscn")
+
+
+# ---------------------------------------------------------------- touch
+
+func _touch_layout() -> void:
+	var b := [
+		{"label_fn": func() -> String: return "FIRE" if manning != null and not ended and not paused else "", "mouse": MOUSE_BUTTON_LEFT, "pos": Vector2(1460, 820), "r": 74.0},
+		{"label_fn": _gun_label, "key": KEY_E, "pos": Vector2(1290, 900), "r": 54.0},
+		{"label_fn": func() -> String: return "RUN" if manning == null and not ended and not paused else "", "key": KEY_SHIFT, "pos": Vector2(1460, 640), "r": 46.0},
+		{"label_fn": func() -> String: return ("STAND" if crouched else "CROUCH") if manning == null and not ended and not paused else "", "key": KEY_C, "pos": Vector2(1300, 740), "r": 46.0},
+		{"label_fn": func() -> String: return "JUMP" if manning == null and not ended and not paused else "", "key": KEY_SPACE, "pos": Vector2(1140, 900), "r": 40.0},
+		{"label_fn": func() -> String: return "" if ended else ("RESUME" if paused else "PAUSE"), "key": KEY_ESCAPE, "pos": Touch.pause_pos(Vector2(1200, 50)), "r": 38.0},
+	]
+	b.append_array(Touch.common_buttons(func() -> bool: return ended,
+		func() -> bool: return result == "won" and CampaignState.active, "soldier", self, Vector2(1200, 50)))
+	Touch.layout({"stick": true, "look": true, "buttons": b})
+	if Touch.is_touch():
+		show_help = false
+
+
+func _gun_label() -> String:
+	if ended or paused:
+		return ""
+	if manning != null:
+		return "LEAVE\nGUN"
+	return "TAKE\nGUN" if near_gun != null else ""
 
 
 # ---------------------------------------------------------------- helpers

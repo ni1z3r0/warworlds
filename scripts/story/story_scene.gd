@@ -67,6 +67,10 @@ const STEPS := {"floor": "step_floor", "round_room": "step_floor", "town": "step
 
 var _step_t := 0.0
 var _tick_t := 0.0
+## Tap (or click) to walk: where to, and what to use on arrival.
+var walk_goal := Vector2.INF
+var walk_use := ""
+var _walk_stuck := 0.0
 var _stride_t := {}
 
 
@@ -126,9 +130,36 @@ func _ready() -> void:
 	hud = load("res://scripts/story/story_hud.gd").new()
 	hud.scene = self
 	layer.add_child(hud)
+	_touch_layout()
+	HowTo.show_once("story", self)
 	Sound.music_for(id)
 	for amb in data.get("ambience", AMBIENCE.get(id, [])):
 		Sound.loop(amb[0], true, float(amb[1]))
+
+
+func _touch_layout() -> void:
+	Touch.layout({
+		"stick": true,
+		"buttons": [
+			{"label_fn": _use_label, "key": KEY_E, "pos": Vector2(1470, 860), "r": 70.0},
+			{"label_fn": func() -> String: return "" if dead or done else "RUN", "key": KEY_SHIFT, "pos": Vector2(1300, 900), "r": 50.0},
+			{"label": "MENU", "key": KEY_M, "pos": Vector2(1550, 50), "r": 38.0},
+			{"label": "?", "call": func() -> void: HowTo.show_card("story", self), "pos": Vector2(1460, 50), "r": 38.0},
+		],
+	})
+
+
+func _use_label() -> String:
+	if dead:
+		return "TRY\nAGAIN"
+	if done:
+		return "GO ON"
+	if not busy.is_empty():
+		return ""
+	var it := nearest_interactable()
+	if it.is_empty():
+		return ""
+	return "TALK" if npcs.has(it.id) else "USE"
 
 
 func _exit_tree() -> void:
@@ -166,6 +197,39 @@ func _light(c: Color, energy: float, sc: float) -> PointLight2D:
 
 func steps() -> Array:
 	return data.steps
+
+
+## Where the current goal is, for the gold marker: the person to talk to,
+## the thing to use, or the middle of the place to reach. INF if none.
+func goal_target() -> Vector2:
+	if done or dead or step_i >= steps().size() or not busy.is_empty() or not queue.is_empty():
+		return Vector2.INF
+	var w: Dictionary = steps()[step_i].get("when", {})
+	if w.has("talk") and npcs.has(w.talk) and (npcs[w.talk] as HousePerson).visible:
+		return (npcs[w.talk] as HousePerson).position
+	if w.has("use"):
+		for pr in data.get("props", []):
+			if pr.get("id", "") == w.use:
+				return pr.pos
+	if w.has("reach"):
+		var r: Variant = data.get("areas", {}).get(w.reach)
+		if r is Rect2:
+			return (r as Rect2).get_center()
+	return Vector2.INF
+
+
+## The current step's tutorial tip, keyboard or touch version ("" if none).
+func tip() -> String:
+	if done or dead or step_i >= steps().size() or not queue.is_empty():
+		return ""
+	if not busy.is_empty() and busy.kind != "scope":
+		return ""
+	var t: Variant = steps()[step_i].get("tip")
+	if busy.get("kind", "") == "scope":
+		t = data.get("scope_tip")
+	if t is Dictionary:
+		return String((t as Dictionary).get("touch" if Touch.is_touch() else "keys", ""))
+	return ""
 
 
 func goal() -> String:
@@ -367,6 +431,11 @@ func _move_player(delta: float) -> void:
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN): v.y += 1
 	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT): v.x -= 1
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT): v.x += 1
+	if v != Vector2.ZERO:
+		walk_goal = Vector2.INF
+		walk_use = ""
+	elif walk_goal != Vector2.INF:
+		v = _walk_dir(delta)
 	player.moving = v != Vector2.ZERO
 	if v == Vector2.ZERO:
 		_step_t = 0.0
@@ -385,6 +454,55 @@ func _move_player(delta: float) -> void:
 	if not world.solid(q, 10.0):
 		player.position = q
 	player.facing = v
+
+
+## Walking towards a tapped spot; on reaching a tapped person or thing, use it.
+func _walk_dir(delta: float) -> Vector2:
+	if walk_use != "":
+		var it := nearest_interactable()
+		if not it.is_empty() and it.id == walk_use:
+			interacted = walk_use
+			walk_goal = Vector2.INF
+			walk_use = ""
+			return Vector2.ZERO
+	var d := walk_goal - player.position
+	if d.length() < 6.0:
+		walk_goal = Vector2.INF
+		walk_use = ""
+		return Vector2.ZERO
+	# give up if something solid is in the way
+	var before := player.position
+	if before.distance_to(walk_goal) > 6.0 and _walk_stuck > 0.6:
+		walk_goal = Vector2.INF
+		walk_use = ""
+		_walk_stuck = 0.0
+		return Vector2.ZERO
+	var dir := d.normalized()
+	var q := player.position + dir * 110.0 * delta
+	if world.solid(q, 10.0) and world.solid(player.position + Vector2(dir.x, 0) * 110.0 * delta, 10.0) and world.solid(player.position + Vector2(0, dir.y) * 110.0 * delta, 10.0):
+		_walk_stuck += delta
+	else:
+		_walk_stuck = 0.0
+	return dir
+
+
+## A tap or click on the scene: walk there, or to the person or thing tapped.
+func _tap(p: Vector2) -> void:
+	walk_use = ""
+	walk_goal = p
+	var bd := 46.0
+	for nid in npcs.keys():
+		var n: HousePerson = npcs[nid]
+		if n.visible and not n.down and n.position.distance_to(p) < bd:
+			bd = n.position.distance_to(p)
+			walk_use = nid
+			walk_goal = n.position
+	for pr in data.get("props", []):
+		if pr.has("id") and (pr.pos as Vector2).distance_to(p) < maxf(bd, 60.0):
+			bd = (pr.pos as Vector2).distance_to(p)
+			walk_use = pr.id
+			walk_goal = pr.pos
+	_walk_stuck = 0.0
 
 
 func _move_npcs(delta: float) -> void:
@@ -499,6 +617,8 @@ func _die(why: String) -> void:
 
 
 func respawn() -> void:
+	walk_goal = Vector2.INF
+	walk_use = ""
 	dead = false
 	player.down = false
 	player.position = checkpoint.pos
@@ -507,8 +627,15 @@ func respawn() -> void:
 # ---------------------------------------------------------------- input
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		advance()
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if dead:
+			respawn()
+		elif done:
+			_complete()
+		elif not busy.is_empty():
+			advance()
+		else:
+			_tap(get_canvas_transform().affine_inverse() * (event as InputEventMouseButton).position)
 		return
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return

@@ -48,7 +48,8 @@ func _draw() -> void:
 	_bar(Rect2(82, h - 58, 250, 8), mode.hp / 100.0, Color(0.9, 0.3, 0.2))
 	var stance := "CROUCHED  (C)" if mode.crouched else ("SPRINTING" if mode.sprinting else "Standing  (C to crouch)")
 	draw_string(font, Vector2(82, h - 40), stance, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(CREAM, 0.7))
-	draw_string(font, Vector2(w - 200, h - 30), "F1  gunner's guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(CREAM, 0.6))
+	if not Touch.is_touch():
+		draw_string(font, Vector2(w - 200, h - 30), "F1  gunner's guide", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(CREAM, 0.6))
 
 	if mode.near_gun != null and mode.manning == null and not mode.ended:
 		draw_string_outline(font, Vector2(0, h * 0.62), "E  -  take the gun", HORIZONTAL_ALIGNMENT_CENTER, w, 20, 5, Color(0, 0, 0, 0.7))

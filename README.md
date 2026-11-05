@@ -12,6 +12,30 @@ A game based on H. G. Wells' *The War of the Worlds* (1898). Built in **Godot 4.
 
 In every mode, **R** restarts and **M** returns to the menu.
 
+**On a tablet or phone:** open the web version at **https://ni1z3r0.github.io/warworlds/** in Safari or Chrome. Turn the tablet sideways, and tap FULL SCREEN on the menu. Touch controls appear as soon as you touch the screen:
+
+- a **MOVE** stick at the bottom left
+- drag on the view to look and aim (3D modes)
+- buttons for each action (USE, FIRE, GRAB, HIDE...)
+- tap anywhere to read on
+
+In the story chapters you can also tap the ground to walk there, or tap a person to go and talk to them. In the strategy mode, tap a person to select them, then tap the ground to send them there.
+
+## Learning to play
+
+- **Chapter I is a guided tutorial.** Green HOW TO PLAY boxes explain each step, keyboard or touch, and a gold arrow always marks the goal.
+- **Each mode shows a how-to-play card the first time you open it.** The **?** button (or the guide key) shows it again.
+- **HOW TO PLAY** on the main menu shows every card, with keyboard and touch controls side by side.
+
+## The web build
+
+```bash
+GODOT=/path/to/godot tools/build_web.sh      # builds build/web (needs the 4.3 export templates)
+GODOT=/path/to/godot tools/publish_web.sh    # builds, then pushes build/web to the gh-pages branch
+```
+
+The build uses Godot's no-threads web template, so any static host works. The touch controls live in `scripts/touch.gd` and `scripts/touch_layer.gd`, and the cards in `scripts/how_to.gd`. `tools/touch_test.gd` plays Chapter I with real touch events: `godot --headless -s tools/touch_test.gd -- --story=b1_01 --touch`.
+
 ## The story: play the novel, chapter by chapter
 
 ![The story](docs/screenshots/story.png)
