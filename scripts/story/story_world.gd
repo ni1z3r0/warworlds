@@ -2,7 +2,9 @@ class_name StoryWorld
 extends Node2D
 ## Draws a story chapter's place from its data (top-down, sepia ink) and
 ## answers collision queries. Prop kinds: telescope, table, siphon, lantern,
-## pine, house, pit, cylinder, road, bridge, fence, hummock, crate, cart.
+## pine, house, pit, cylinder, road, bridge, fence, hummock, crate, cart,
+## river (water you cannot walk into), hedge (a line of bushes; cover),
+## boat. A chapter's "heliograph" (Vector2) flickers on the far hills.
 
 const W := 1600
 const H := 900
@@ -64,6 +66,8 @@ func solid(p: Vector2, r: float) -> bool:
 			return true
 		if pr.kind == "telescope" and p.distance_to(pr.pos) < 26.0 + r:
 			return true
+		if pr.kind == "river" and _near_line(p, pr.pts, float(pr.get("w", 120.0)) * 0.5 - 6.0 + r):
+			return true
 	if data.has("round_room"):
 		var rr: Dictionary = data.round_room
 		var d: float = p.distance_to(rr.c)
@@ -85,10 +89,20 @@ func in_cover(p: Vector2) -> bool:
 			return true
 		if pr.kind == "ditch" and (pr.rect as Rect2).has_point(p):
 			return true
+		if pr.kind == "hedge" and _near_line(p, pr.pts, 26.0):
+			return true
 		if pr.kind == "pine" and p.distance_to(pr.pos) < pr.get("r", 22.0) + 14.0:
 			return true
 	for k in data.get("areas", {}).keys():
 		if String(k).begins_with("cover") and (data.areas[k] as Rect2).has_point(p):
+			return true
+	return false
+
+
+func _near_line(p: Vector2, pts: Array, dist: float) -> bool:
+	for i in pts.size() - 1:
+		var q := Geometry2D.get_closest_point_to_segment(p, pts[i], pts[i + 1])
+		if q.distance_to(p) < dist:
 			return true
 	return false
 
@@ -112,8 +126,20 @@ func _draw() -> void:
 	for dd in _decor:
 		var c: Color = [Color(0.3, 0.2, 0.2, 0.6), Color(0.25, 0.22, 0.12, 0.5), Color(0.42, 0.34, 0.22, 0.5)][dd.k]
 		draw_circle(dd.p, dd.r, c)
-	# roads first
+	# rivers and roads first
 	for pr in data.get("props", []):
+		if pr.kind == "river":
+			var pts := PackedVector2Array(pr.pts)
+			var wd := float(pr.get("w", 120.0))
+			draw_polyline(pts, Color(0.22, 0.2, 0.12), wd + 26.0, true)      # muddy banks
+			draw_polyline(pts, Color(0.18, 0.24, 0.27), wd, true)
+			draw_polyline(pts, Color(0.24, 0.31, 0.33), wd * 0.55, true)
+			# ripples drifting downstream
+			for k in 40:
+				var i := k % (pts.size() - 1)
+				var u := fmod(k * 0.37 + _t * 0.03, 1.0)
+				var c := pts[i].lerp(pts[i + 1], u) + Vector2(0, (fmod(k * 53.0, wd * 0.8)) - wd * 0.4)
+				draw_line(c, c + (pts[i + 1] - pts[i]).normalized() * 16.0, Color(0.5, 0.6, 0.6, 0.35), 1.5)
 		if pr.kind == "road":
 			draw_polyline(PackedVector2Array(pr.pts), Color(0.5, 0.42, 0.3), 46.0, true)
 			draw_polyline(PackedVector2Array(pr.pts), Color(0.62, 0.53, 0.38), 34.0, true)
@@ -144,6 +170,13 @@ func _draw() -> void:
 			var x := fmod(k * 137.0 + _t * 520.0, W + 200.0) - 100.0
 			var y := fmod(k * 71.0 + _t * 900.0, H + 100.0) - 50.0
 			draw_line(Vector2(x, y), Vector2(x - 10, y + 26), Color(0.75, 0.8, 0.95, 0.25 + 0.4 * flash), 1.0)
+	if data.has("heliograph"):
+		# "a faint flickering that danced over the sky": a signal lamp on the hills
+		var hg: Vector2 = data.heliograph
+		var on := fmod(_t * 2.6, 1.0) < (0.3 if int(_t * 2.6) % 3 == 0 else 0.12)
+		if on:
+			draw_circle(hg, 9, Color(1, 1, 0.85, 0.35))
+			draw_circle(hg, 3.5, Color(1, 1, 0.9, 0.95))
 	for a in data.get("labels", []):
 		draw_string(font, a[1], a[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(0.95, 0.85, 0.7, 0.45))
 
@@ -247,6 +280,23 @@ func _draw_prop(pr: Dictionary, ink: Color) -> void:
 			draw_rect((pr.rect as Rect2).grow(-6), Color(0.18, 0.2, 0.25, 0.7))
 		"pool":
 			draw_circle(p, pr.get("r", 30.0), Color(0.2, 0.24, 0.32, 0.85))
+		"hedge":
+			var hp: Array = pr.pts
+			for i in hp.size() - 1:
+				var a: Vector2 = hp[i]
+				var b: Vector2 = hp[i + 1]
+				var n := int(a.distance_to(b) / 18.0)
+				for k in n + 1:
+					var c := a.lerp(b, float(k) / maxf(n, 1)) + Vector2(sin(k * 2.3) * 4.0, cos(k * 1.7) * 4.0)
+					draw_circle(c + Vector2(4, 6), 21, Color(0, 0, 0, 0.25))
+					draw_circle(c, 20, Color(0.2, 0.26, 0.12))
+					draw_circle(c + Vector2(-5, -5), 9, Color(0.3, 0.36, 0.18))
+		"boat":
+			var bd: Vector2 = pr.get("dir", Vector2.RIGHT)
+			var pts := PackedVector2Array([p + bd * 36.0, p + bd.orthogonal() * 13.0, p - bd * 30.0 + bd.orthogonal() * 11.0, p - bd * 30.0 - bd.orthogonal() * 11.0, p - bd.orthogonal() * 13.0])
+			draw_colored_polygon(pts, Color(0.35, 0.22, 0.12))
+			pts.append(pts[0])
+			draw_polyline(pts, ink, 2.0)
 		"crate":
 			draw_rect(Rect2(p - Vector2(14, 14), Vector2(28, 28)), Color(0.4, 0.28, 0.15))
 		"cart":

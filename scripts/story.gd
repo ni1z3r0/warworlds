@@ -107,7 +107,7 @@ const CHAPTERS := [
 		"title": "IX. The Fighting Begins",
 		"music": "egmont",
 		"book": BOOK_ONE,
-		"cast": ["narrator", "wife", "landlord", "artilleryman"],
+		"cast": ["narrator", "wife", "artilleryman"],
 		"scene": "res://scenes/main.tscn",
 		"mode": "Strategy: the dog cart road to Leatherhead",
 		"plates": [
@@ -167,8 +167,10 @@ const CHAPTERS := [
 		"music": "suk_meditation",
 		"book": BOOK_ONE,
 		"cast": ["narrator", "curate"],
+		"story": "b1_13",
+		"mode": "Story: the riverbank near Walton",
 		"plates": [
-			["", "Swept down the Thames, you come ashore near Walton and meet a curate sitting in the ruins. \"What does it mean?\" he asks. Coming soon."],
+			["", "Swept down the Thames from burning Weybridge, you come ashore near Walton, sick with the heat. Beside you, when you wake, sits a curate. \"What does it mean?\" he asks."],
 		],
 	},
 	{

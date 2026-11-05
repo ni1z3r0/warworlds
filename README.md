@@ -52,12 +52,13 @@ Choose **THE STORY** on the main menu. The game follows the novel's own chapters
 | VI. The Heat-Ray in the Chobham Road | Read |
 | VII. How I Reached Home | Story: nobody in Maybury believes you, then dinner with your wife |
 | VIII. Friday Night | Read |
-| IX. The Fighting Begins | Strategy: the dog cart road to Leatherhead |
+| IX. The Fighting Begins | Strategy: drive your wife down the dog cart road to Leatherhead (the landlord stays behind) |
 | X. In the Storm | Story: the third star falls, the dog cart crashes, then cross the storm. In each lightning flash, be in cover or be seen. |
 | XI. At the Window | Story: watch Woking burn, let the artilleryman in, and hear his story |
 | XII. The Destruction of Weybridge and Shepperton | First person: the artilleryman's gun |
 | Interlude: The Martian | First person: the fighting-machine |
-| XIII to XVII (the curate, London, the Exodus, the *Thunder Child*) | Read (playable soon) |
+| XIII. How I Fell In with the Curate | Story: come ashore sick near Walton, find shade, and meet the curate. The whole conversation is in Wells' words. |
+| XIV to XVII (London, the Exodus, the *Thunder Child*) | Read (playable soon) |
 
 | Book Two | How you play it |
 |---|---|
@@ -95,7 +96,7 @@ Book Two, chapters I to V. The fifth cylinder has buried the house where the Nar
 The game follows the novel's own people. Each character has an ink portrait drawn from Wells' description (AI-generated; see `art/portraits/CREDITS.md`), and their descriptions and spoken lines are Wells' words, defined in `scripts/cast.gd`.
 
 - **Storybook:** each chapter shows who appears in it (click a portrait), and **THE CAST** page has every character's portrait, description and line.
-- **Chapter I:** you escort **the Narrator, his Wife and the Landlord** of the Spotted Dog down the dog cart road to Leatherhead, as in the novel, covered by **the Artilleryman's** gun. Their portraits are on the unit cards, and each speaks their line the first time the machine nearly spots them.
+- **Chapter IX:** you escort **the Narrator and his Wife** down the dog cart road to Leatherhead, in the dog cart borrowed from the landlord of the Spotted Dog, as in the novel, covered by **the Artilleryman's** gun. (The landlord stays behind; you find him dead in chapter X.) Their portraits are on the unit cards, and each speaks their line the first time the machine nearly spots them.
 - **The Artillery:** you play **the Artilleryman**, who opens with his report from the novel: "Gun destroyed last night, sir. Have been hiding. Trying to rejoin battery, sir."
 
 Every quote in the game can be re-checked against the novel:

@@ -3,11 +3,11 @@ extends Node2D
 ## Builds the scene, handles RTS input, resolves combat and win/lose.
 
 ## Wells' own characters (see scripts/cast.gd). In the novel the narrator
-## borrows the landlord's dog cart and drives his wife to Leatherhead.
+## borrows the landlord's dog cart and drives his wife to Leatherhead; the
+## landlord stays behind at the Spotted Dog (he dies there in chapter X).
 const ROSTER := [
 	{"id": "narrator", "name": "The Narrator", "role": "A writer of Woking", "speed": 50.0, "coat": Color(0.3, 0.3, 0.34)},
 	{"id": "wife", "name": "His Wife", "role": "Bound for Leatherhead", "speed": 46.0, "coat": Color(0.55, 0.22, 0.42)},
-	{"id": "landlord", "name": "The Landlord", "role": "Of the Spotted Dog", "speed": 36.0, "coat": Color(0.55, 0.42, 0.20)},
 ]
 
 var game: Node2D
@@ -54,7 +54,7 @@ func _ready() -> void:
 	_setup_unit(gun, "The Artilleryman", "Driver, Royal Artillery", 38.0, Vector2(330, 262))
 	gun.portrait_id = "artilleryman"
 	gun.facing = Vector2.DOWN
-	var starts := [Vector2(200, 165), Vector2(222, 182), Vector2(186, 184)]
+	var starts := [Vector2(200, 165), Vector2(222, 182)]
 	for i in ROSTER.size():
 		var s := Survivor.new()
 		s.coat = ROSTER[i].coat
@@ -128,8 +128,8 @@ func start() -> void:
 	Sound.play("ulla", -6.0, 0.0)
 	get_tree().paused = false
 	log_msg("A machine has risen from the pit on Horsell Common.")
-	log_msg("The Landlord: \"I'm selling my bit of a pig.\"")
-	log_msg("Take the dog cart road to Leatherhead. Get everyone across the river.")
+	log_msg("The landlord of the Spotted Dog lends you his dog cart, and stays behind to sell his bit of a pig.")
+	log_msg("Take the dog cart road to Leatherhead. Get your wife across the river.")
 
 
 # ---------------------------------------------------------------- loop
@@ -498,11 +498,11 @@ func _setup_autotest() -> void:
 			variant = arg.substr(11)
 	if variant == "b":
 		# gun stands and fights; everyone else hides
-		_test_steps = [[0.3, func(): _set_selection([roster[1], roster[2], roster[3]]); hide_selected()],
+		_test_steps = [[0.3, func(): _set_selection([roster[1], roster[2]]); hide_selected()],
 			[0.4, func(): _set_selection([gun]); gun.toggle_deploy()]]
 		for k in 40:
 			_test_steps.append([3.0 + k * 2.5, func(): _set_selection([gun]); if gun.can_fire() and tripod.is_active(): command(tripod.position)])
-		_test_steps.append([150.0, func(): _set_selection([roster[1], roster[2], roster[3]]); command(Vector2(160, 830))])
+		_test_steps.append([150.0, func(): _set_selection([roster[1], roster[2]]); command(Vector2(160, 830))])
 		_test_steps.append([330.0, func(): _finish_autotest()])
 		return
 	if variant == "d":
@@ -535,14 +535,14 @@ func _setup_autotest() -> void:
 		_test_steps = [[330.0, func(): _finish_autotest()]]
 		return
 	_test_steps = [
-		[0.5, func(): _set_selection([roster[1], roster[2]]); command(Vector2(160, 830))],
-		[0.6, func(): _set_selection([roster[3]]); hide_selected()],
+		[0.5, func(): _set_selection([roster[1]]); command(Vector2(160, 830))],
+		[0.6, func(): _set_selection([roster[2]]); hide_selected()],
 		[0.7, func(): _set_selection([gun]); command(Vector2(420, 360))],
 		[9.0, func(): _set_selection([gun]); gun.toggle_deploy()],
 		[13.0, func(): _set_selection([gun]); command(tripod.position)],
 		[19.0, func(): _set_selection([gun]); command(tripod.position)],
 		[25.0, func(): _set_selection([gun]); command(tripod.position)],
-		[40.0, func(): _set_selection([roster[3]]); command(Vector2(160, 830))],
+		[40.0, func(): _set_selection([roster[2]]); command(Vector2(160, 830))],
 		[240.0, func(): _finish_autotest()],
 	]
 

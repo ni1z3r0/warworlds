@@ -43,7 +43,7 @@ func _draw() -> void:
 	# objective
 	_panel(Rect2(12, 12, 470, 78))
 	_text(Vector2(24, 36), "IX. THE FIGHTING BEGINS  -  HORSELL COMMON, 1898", 16, amber, serif)
-	_text(Vector2(24, 58), "Get the survivors across the river to the Leatherhead road.", 13, cream)
+	_text(Vector2(24, 58), "Get your wife and yourself across the river to the Leatherhead road.", 13, cream)
 	var esc := 0
 	var lost := 0
 	var taken := 0

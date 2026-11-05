@@ -40,7 +40,7 @@ const CARDS := {
 	},
 	"rts": {
 		"title": "THE FIGHTING BEGINS",
-		"goal": "Strategy. A fighting-machine is loose. Get your people down the road to Leatherhead (the exit on the map) before it finds them. The Artilleryman's gun can fight back.",
+		"goal": "Strategy. A fighting-machine is loose. Get the narrator and his wife down the road to Leatherhead (the exit on the map) before it finds them. The Artilleryman's gun can fight back.",
 		"rows": [
 			["Click a person, or drag a box", "Tap a person, or drag a box", "choose who to command"],
 			["Right-click the ground", "Tap the ground", "move there"],

@@ -5,7 +5,7 @@ extends Control
 
 const MODES := [
 	["THE STORY", "Play the novel chapter by chapter. Continues where you left off.", "res://scenes/campaign.tscn"],
-	["THE FIGHTING BEGINS", "Strategy: escort the narrator, his wife and the landlord to Leatherhead.", "res://scenes/main.tscn"],
+	["THE FIGHTING BEGINS", "Strategy: drive your wife to Leatherhead in the landlord's dog cart.", "res://scenes/main.tscn"],
 	["THE FIGHTING-MACHINE", "First person: you are the Martian. Silence the batteries. Fill the cage.", "res://scenes/pilot.tscn"],
 	["THE ARTILLERY", "First person: you are a gunner. Bring the machine down. Free its captives.", "res://scenes/soldier.tscn"],
 	["HOW TO PLAY", "The controls for keyboard and touch screen, and how each part of the game works.", "res://scenes/how_to_play.tscn"],

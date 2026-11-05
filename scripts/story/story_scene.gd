@@ -62,6 +62,7 @@ const AMBIENCE := {
 	"b1_07": [["night_loop", -10.0], ["fire_loop", -16.0]],
 	"b1_10": [["rain_loop", -4.0], ["wind_loop", -8.0]],
 	"b1_11": [["fire_loop", -20.0], ["night_loop", -16.0]],
+	"b1_13": [["wind_loop", -16.0], ["fire_loop", -22.0]],
 }
 const STEPS := {"floor": "step_floor", "round_room": "step_floor", "town": "step_gravel", "heath": "step_grass"}
 
@@ -386,6 +387,9 @@ func _run(a: Array) -> void:
 			next_flash = 2.5
 		"checkpoint":
 			checkpoint = {"pos": player.position, "step": step_i}
+		"speed":
+			# ["speed", multiplier]: how fast the player can walk
+			data["player_speed"] = float(a[1])
 		"end":
 			done = true
 			Sound.loop("ray_hum", false)
@@ -441,7 +445,7 @@ func _move_player(delta: float) -> void:
 		_step_t = 0.0
 		return
 	v = v.normalized()
-	var spd := 170.0 if Input.is_key_pressed(KEY_SHIFT) else 110.0
+	var spd := (170.0 if Input.is_key_pressed(KEY_SHIFT) else 110.0) * float(data.get("player_speed", 1.0))
 	_step_t -= delta
 	if _step_t <= 0.0:
 		_step_t = 0.27 if spd > 120.0 else 0.38
